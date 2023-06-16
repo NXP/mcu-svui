@@ -1,0 +1,20 @@
+ <#if memory.name=="SRAM_ITC">
+        *pdm_to_pcm_task.o(.text*)
+        *audio_processing_task.o(.text*)
+        *libVoiceSeekerLight.a:(.text*)
+        *sln_flash.o(.text*)
+        *flexspi_nor_flash_ops.o(.text*)
+        *sln_afe.o(.text*)
+        *sln_pdm_mic.o(.text*)
+        *sln_i2s_mic.o(.text*)
+        *fsl_sai.o(.text*)
+        *fsl_sai_edma.o(.text*)
+        *fsl_edma.o(.text*)
+        *fsl_flexspi.o(.text*)
+        *ccidec.o(.bss.ccidec_filesrc_buf)
+        *ccidec.o(.bss.ccidec_packed_buf)
+</#if>
+
+<#if memory.name=="SRAM_DTC">
+        *ccidec.o(.bss.*)
+</#if>
