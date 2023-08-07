@@ -1,7 +1,7 @@
 Release Name: Smart Voice User Interface (SVUI)
 Release Version: 1.0.0
-Package Version: sln_svui_iot_R1_RC7
-Outgoing License: LA_OPT_NXP_Software_License v45 May 2023 - Additional Distribution Use, Section 2.3 applies
+Package Version: sln_svui_iot_R1_RC8
+Outgoing License: LA_OPT_NXP_Software_License v47 July 2023 - Additional Distribution Use, Section 2.3 applies
 License file: LICENSE.txt
 Type of content: source code
 Description: NXP’s product with a part number of MIMXRT1062VCDP or NXP’s product included in the NXP evaluation kit with a part number of SLN-SVUI-IOT
@@ -103,7 +103,7 @@ LittleFS                   Name: LittleFS
 sln_asr                    Name: Solutions ASR                               
                            Version: 1.0.0                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v45 May 2023 - Additional distribution license 
+                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
                            granted - License in Section 2.3 applies
                            License File: LICENSE.txt     
                            Format: Binary                                    
@@ -115,7 +115,7 @@ sln_asr                    Name: Solutions ASR
 sln_iot_common_platform    Name: IoT Solutions Common Platform               
                            Version: 1.0.1                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v45 May 2023 - Additional distribution license 
+                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
                            granted - License in Section 2.3 applies
                            License File: LICENSE.txt       
                            Format: Source                                    
@@ -126,7 +126,7 @@ sln_iot_common_platform    Name: IoT Solutions Common Platform
 sln_dsp_toolbox            Name: Solutions Audio DSP Toolbox                 
                            Version: 1.0.0                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v45 May 2023 - Additional distribution license 
+                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
                            granted - License in Section 2.3 applies
                            License File: LICENSE.txt     
                            Format: Binary                                    
@@ -138,7 +138,7 @@ sln_dsp_toolbox            Name: Solutions Audio DSP Toolbox
 VoiceSeekerLight           Name: Voice Seeker                                
                            Version: 0.5.2                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v45 May 2023 - Additional distribution license 
+                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
                            granted - License in Section 2.3 applies
                            License File: LICENSE.txt  
                            Format: Binary and source code                    
@@ -150,7 +150,7 @@ VoiceSeekerLight           Name: Voice Seeker
 VIT_CM7_v04_08_00_EAR      Name: VIT CM7                                
                            Version: 4.8.0.                                   
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v45 May 2023 - Additional distribution license 
+                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
                            granted - License in Section 2.3 applies
                            License File: LICENSE.txt  
                            Format: Binary and source code                    
