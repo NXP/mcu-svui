@@ -1,0 +1,188 @@
+Release Name: SLN i.MX Program and Test
+Version: 0.0.0
+Package License: LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
+
+Host tools - Serial       Description: Windows Serial peripheral support
+support                   Author: Bus Pirate Project
+                          License: Open Source - CC0-1.0 (Creative Commons Zero)
+                          URL: http://code.google.com/p/the-bus-pirate/
+                          Format: binary code
+                          Location:
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/mac/blhost
+                          Tools/sdphost/win/sdphost.exe
+                          Tools/sdphost/linux/i386/sdphost
+                          Tools/sdphost/linux/amd64/sdphost
+                          Tools/sdphost/mac/sdphost
+
+Host tools - USB HID      Description: Windows USB HID support
+support                   Author: HIDAPI
+                          License: Open Source - BSD-3-Clause
+                          URL: http://github.com/signal11/hidapi
+                          Format: binary code
+                          Location:
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/mac/blhost
+                          Tools/sdphost/win/sdphost.exe
+                          Tools/sdphost/linux/i386/sdphost
+                          Tools/sdphost/linux/amd64/sdphost
+                          Tools/sdphost/mac/sdphost
+
+Host tools - JSON support Description: Windows JSON support
+                          Author: JSONCPP
+                          License: Open Source - MIT
+                          Format: binary code
+                          Location:
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/mac/blhost
+
+Host tools - options      Description: Command line parsing utility
+support                   Author: bradapp@enteract.com
+                          License: Open Source - MIT
+                          URL:
+                          http://www.bradapp.com
+                          Format: binary code
+                          Location:
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/mac/blhost
+                          Tools/sdphost/win/sdphost.exe
+                          Tools/sdphost/linux/i386/sdphost
+                          Tools/sdphost/linux/amd64/sdphost
+                          Tools/sdphost/mac/sdphost
+
+Bootloader Source,        Description: C++ interface to the Vincent Rijmen's Rijndael block cipher
+Host Source - blfwk.lib   Author: Szymon Stefanek (stefanek@tin.it)
+                          License: Public Domain
+                          URL:
+                          http://www.pragmaware.net/software/rijndael/index.php
+                          Format: binary code
+                          Location:
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/mac/blhost
+
+MBED TLS stack            Author: ARM
+                          Description: Cryptographic and SSL/TLS Library
+                          License: Apache-2.0
+                          name: MBED TLS stack
+                          URL: https://tls.mbed.org/
+                          version: 2.6.0
+                          Format: binary code
+                          Location:
+                          Tools/elftosb/win/elftosb.exe
+                          Tools/elftosb/linux/i386/elftosb
+                          Tools/elftosb/linux/amd64/elftosb
+                          Tools/elftosb/mac/elftosb
+
+
+elftosb                   Description: Command line parsing utility for
+                          Boot image generation and programming image generation
+                          Author: NXP
+                          License: Open Source - BSD-3-Clause
+                          Format: binary code
+                          Location:
+                          Tools/elftosb/win/elftosb.exe
+                          Tools/elftosb/linux/i386/elftosb
+                          Tools/elftosb/linux/amd64/elftosb
+                          Tools/elftosb/mac/elftosb
+
+blhost                    Description: Command utility to communicate with MCUx Bootloader
+                          Author: NXP
+                          License: Open Source - BSD-3-Clause
+                          Format: binary code
+                          Location:
+                          Tools/blhost/win/blhost.exe
+                          Tools/blhost/linux/i386/blhost
+                          Tools/blhost/linux/amd64/blhost
+                          Tools/blhost/mac/blhost
+
+sdphost                   Description: Command utility to communicate with i.MX ROM
+                          Author: NXP
+                          License: Open Source - BSD-3-Clause
+                          Format: binary code
+                          Tools/sdphost/win/sdphost.exe
+                          Tools/sdphost/linux/i386/sdphost
+                          Tools/sdphost/linux/amd64/sdphost
+                          Tools/sdphost/mac/sdphost
+
+cst                       Description: Command utility for code signing for high assurance boot
+                          Author: NXP
+                          License: see /Tools/cst/LICENSE.nxp
+                          Format: binary code
+                          Tools/cst/linux32/bin/cst
+                          Tools/cst/linux32/bin/hab_log_parser
+                          Tools/cst/linux32/bin/srktool
+                          Tools/cst/linux32/bin/x5092wtls
+                          Tools/cst/linux32/lib/libfrontend.a
+                          Tools/cst/linux64/bin/cst
+                          Tools/cst/linux64/bin/hab_log_parser
+                          Tools/cst/linux64/bin/srktool
+                          Tools/cst/linux64/bin/x5092wtls
+                          Tools/cst/linux64/lib/libfrontend.a
+                          Tools/cst/mingw32/bin/cst.exe
+                          Tools/cst/mingw32/bin/srktool.exe
+                          Tools/cst/mingw32/bin/x5092wtls.exe
+                          Tools/cst/mingw32/lib/libfrontend.a
+
+OpenSSL                   Description: SSL/TLS and Cryptographic library
+                          Author: The OpenSSL Project and Eric Young
+                          License: see /Tools/cst/LICENSE.openssl
+                          Format: binary code
+                          Tools/cst/linux32/bin/cst
+                          Tools/cst/linux32/bin/hab_log_parser
+                          Tools/cst/linux32/bin/srktool
+                          Tools/cst/linux32/bin/x5092wtls
+                          Tools/cst/linux32/lib/libfrontend.a
+                          Tools/cst/linux64/bin/cst
+                          Tools/cst/linux64/bin/hab_log_parser
+                          Tools/cst/linux64/bin/srktool
+                          Tools/cst/linux64/bin/x5092wtls
+                          Tools/cst/linux64/lib/libfrontend.a
+                          Tools/cst/mingw32/bin/cst.exe
+                          Tools/cst/mingw32/bin/srktool.exe
+                          Tools/cst/mingw32/bin/x5092wtls.exe
+                          Tools/cst/mingw32/lib/libfrontend.a
+
+Ivaldi                    Description: Python wrappers and test scripts for blhost, sdphost, elftosb, cst, onboard
+                          Author: NXP
+                          License: LA_OPT_NXP_Software_License v39 August 2022
+                          Format: Source Code
+                          Location:
+                          setup.py
+                          read_serial.py
+                          Ivaldi/__init__.py
+                          Ivaldi/blhost/__init__.py
+                          Ivaldi/cst/__init__.py
+                          Ivaldi/elftosb/__init__.py
+                          Ivaldi/sdphost/__init__.py
+                          Ivaldi/helpers/__init__.py
+                          Ivaldi/onboard/__init__.py
+                          Ivaldi/onboard/aws.py
+                          Scripts/demos/aws_onboard.py
+                          Scripts/demos/erase.py
+                          Scripts/demos/program_hello_world.py
+                          Scripts/demos/read_fuse.py
+                          Scripts/demos/read_serial.py
+                          Scripts/demos/write_fuse.py
+                          Scripts/ota_signing/generate_signing_artifacts.py
+                          Scripts/ota_signing/sign/fica_maker.py
+                          Scripts/ota_signing/sign/sign_me.py
+                          Scripts/ota_signing/sign/sign_package.py
+                          Scripts/ota_signing/sign/sign_pass.py
+                          Scripts/sln_platforms_config/sln_svui_iot_config/board_config.py
+                          Scripts/sln_svui_iot_open_boot/open_prog_full.py
+                          Scripts/sln_svui_iot_secure_boot/manf/prog_sec_app.py
+                          Scripts/sln_svui_iot_secure_boot/manf/enable_hab.py
+                          Scripts/sln_svui_iot_secure_boot/manf/lock_device.py
+                          Scripts/sln_svui_iot_secure_boot/oem/secure_app.py
+                          Scripts/sln_svui_iot_secure_boot/oem/setup_hab.py
+                          Scripts/sln_iot_utils/file_format.py

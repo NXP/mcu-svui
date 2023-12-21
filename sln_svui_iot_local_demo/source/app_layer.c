@@ -7,8 +7,10 @@
  * applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "stdint.h"
-#include "audio_samples.h"
 #include "fsl_common.h"
 #include "FreeRTOSConfig.h"
 #include "sln_amplifier.h"
@@ -28,6 +30,7 @@
  ******************************************************************************/
 
 extern app_asr_shell_commands_t appAsrShellCommands;
+extern TaskHandle_t appTaskHandle;
 
 /*******************************************************************************
  * Prototypes
@@ -153,12 +156,21 @@ __attribute__ ((weak)) bool APP_LAYER_FilterVitDetection(unsigned short commandI
     return filterDetection;
 }
 
+#endif /* ENABLE_VIT_ASR */
+
 __attribute__ ((weak)) void APP_LAYER_HandleFirstBoardBoot(void)
 {
-    if ((appAsrShellCommands.demo == BOOT_ASR_CMD_DEMO) && (BOOT_ASR_CMD_DEMO && DEFAULT_ASR_CMD_DEMO))
+    if ((appAsrShellCommands.demo == BOOT_ASR_CMD_DEMO) &&
+        (BOOT_ASR_CMD_DEMO != DEFAULT_ASR_CMD_DEMO))
     {
         configPRINTF(("First board boot detected\r\n"));
+
         /* Insert any first board boot logic here */
+
+        appAsrShellCommands.demo = DEFAULT_ASR_CMD_DEMO;
+        appAsrShellCommands.status = WRITE_READY;
+
+        /* Notify app task in order to save the active demo in flash */
+        xTaskNotify(appTaskHandle, kDefault, eSetBits);
     }
 }
-#endif /* ENABLE_VIT_ASR */

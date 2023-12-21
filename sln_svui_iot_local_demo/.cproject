@@ -108,7 +108,6 @@
 									<listOptionValue builtIn="false" value="SDK_SAI_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="USE_RTOS=1"/>
 									<listOptionValue builtIn="false" value="SDK_OS_FREE_RTOS"/>
-									<listOptionValue builtIn="false" value="MBEDTLS_CONFIG_FILE='&quot;mbedtls_config.h&quot;'"/>
 									<listOptionValue builtIn="false" value="CONFIG_FLEXRAM_AT_STARTUP=1"/>
 									<listOptionValue builtIn="false" value="SDK_I2C_BASED_COMPONENT_USED=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_RX_ENABLE=0"/>
@@ -391,7 +390,7 @@
 									<listOptionValue builtIn="false" value="ccimeta"/>
 									<listOptionValue builtIn="false" value="sln_dsp_toolbox"/>
 									<listOptionValue builtIn="false" value="PdmConvertForRt10xx"/>
-									<listOptionValue builtIn="false" value="VIT_CM7_v04_08_00_EAR"/>
+									<listOptionValue builtIn="false" value="VIT_CM7_v04_08_01"/>
 									<listOptionValue builtIn="false" value="arm_cortexM7lfdp_math"/>
 									<listOptionValue builtIn="false" value="sln_asr"/>
 								</option>

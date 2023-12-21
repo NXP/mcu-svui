@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 NXP.
+ * Copyright 2020-2023 NXP.
  * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance
  * with the license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -144,6 +144,13 @@ void SLN_ASR_LOCAL_Reset(HANDLE handler);
  * @param handler A handle of the recognizer
  */
 void SLN_ASR_LOCAL_Release(HANDLE handler);
+
+/**
+ * @brief Get DSMT lib version
+ *
+ * @return Pointer to string representing the version
+ */
+const char *SLN_ASR_LOCAL_Ver(void);
 
 #if defined(__cplusplus)
 }

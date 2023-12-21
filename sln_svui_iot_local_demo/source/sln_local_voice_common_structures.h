@@ -26,6 +26,9 @@ typedef struct _oob_demo_control
     uint16_t language;
     uint16_t commandSet;
     uint8_t commandId;
+    uint8_t skipWW;                // Set to 1 to skip Wake Word phase and go directly to Voice Command phase. Will self-clear automatically.
+    uint8_t changeDemoFlow;
+    uint8_t changeLanguageFlow;
 } oob_demo_control_t;
 
 typedef enum _app_flash_status
@@ -81,9 +84,7 @@ typedef struct _app_asr_shell_commands
     uint16_t activeLanguage; // runtime language types
     asr_ptt_t ptt;
     asr_cmd_res_t cmdresults;
-    uint8_t skipWW; // Set to 1 to skip Wake Word phase and go directly to Voice Command phase. Will self-clear automatically.
-    uint8_t changeDemoFlow;
-    uint8_t changeLanguageFlow;
+    uint8_t reserved[3]; // added for backward compatibility; can be replaced by other fields if needed
 } app_asr_shell_commands_t;
 
 #endif /* SLN_LOCAL_VOICE_COMMON_STRUCTURES_H_ */

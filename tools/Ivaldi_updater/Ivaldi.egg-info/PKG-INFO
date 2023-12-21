@@ -1,0 +1,120 @@
+Metadata-Version: 2.1
+Name: Ivaldi
+Version: 0.0
+License: See LA_OPT_NXP_Software_License
+
+# Ivaldi Getting Started
+
+IoT & Security Solutions: i.MX RT Programming and Test Scripts
+
+Modules contained in Ivaldi (Sons of Ivaldi):
+
+- blhost
+- cst
+- elftosb
+- helpers
+- onboard
+    - aws
+- sdphost
+
+## Supported Platforms
+
+- Linux
+    - Bash [Untested]
+    - Python3 [Untested]
+- Windows Subsystem for Linux
+    - Bash
+    - Python3 (Tested with Python 3.8.3)
+- Windows Power Shell and Command Prompt
+    - Python3 (Tested with Python 3.8.3)
+- Mac
+    - Bash
+    - Python3 (Tested with Python 3.7.6)
+    - For macOS 10.15 Catalina make sure calling terminal has Input Monitoring permissions
+
+**KNONW ISSUE**
+If working **WSL** environment, there is a **restriction on the path** on which to clone this repository, ie. you don't want to clone under 'user' folder of linux ~/ .
+**Prefer clonning under /mnt/c and keep a short path**.
+
+## Dependencies
+
+### Hardware
+
+RT Device must be in serial download mode.
+
+For RT SOM with uVoice board this means setting J27 to 0.
+
+### Software
+
+- Python 3.8.x
+    - [NOTE: Might work with other Python 3.x versions, but untested. See above.]
+- Pip for Python3
+
+### Certificates
+
+- Image verification / OTA:
+    - Follow the Scripts/ota_signing/README.md
+
+## Setup
+
+Installing virtualenv
+
+```
+user@host:~/sln_imx_rt_prog_and_test $ pip install virtualenv
+```
+
+Starting virtualenv (inside the sln_imx_rt_prog_and_test folder)
+
+```
+user@host:~/sln_imx_rt_prog_and_test $ virtualenv env
+```
+
+Activating virtualenv in **Bash**
+
+```
+user@host:~/sln_imx_rt_prog_and_test $ source env/bin/activate
+```
+
+Activating virtualenv in **PowerShell**
+
+```
+PS C:\sln_imx_rt_prog_and_test> Set-ExecutionPolicy RemoteSigned
+PS C:\sln_imx_rt_prog_and_test> cd env/Scripts
+PS C:\sln_imx_rt_prog_and_test\env\Scripts> ./activate.ps1
+(env) PS C:\sln_imx_rt_prog_and_test> cd ../..
+```
+
+Activating virtualenv in **CMD Prompt**
+
+```
+C:\sln_imx_rt_prog_and_test> env\Scripts\activate
+```
+
+Install requirements
+
+```
+(env) user@host:~/sln_imx_rt_prog_and_test $ pip install -r requirements.txt
+```
+
+Build Ivaldi API Docs
+
+```
+(env) user@host:~/sln_imx_rt_prog_and_test $ cd Docs/Ivaldi
+(env) user@host:~/sln_imx_rt_prog_and_test $ make html
+(env) user@host:~/sln_imx_rt_prog_and_test $ # Output in Docs/Ivaldi/_build/html
+(env) user@host:~/sln_imx_rt_prog_and_test $ cd ../..  # Get back to parent dir
+```
+
+Installing Ivaldi package
+
+```
+(env) user@host:~/sln_imx_rt_prog_and_test $ python setup.py install
+```
+
+## Executing
+
+- For **Open Boot** check:
+    - Scripts/[PLATFORM]_open_boot/README.md
+- For **Secure Boot** check:
+    - Scripts/[PLATFORM]_secure_boot/README.md
+

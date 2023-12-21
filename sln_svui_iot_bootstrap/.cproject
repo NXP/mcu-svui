@@ -101,9 +101,6 @@
 									<listOptionValue builtIn="false" value="XIP_EXTERNAL_FLASH=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_DCD_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=0x00"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0x00"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0x0001"/>
 									<listOptionValue builtIn="false" value="DISABLE_IMAGE_VERIFICATION=1"/>
 									<listOptionValue builtIn="false" value="UNSECURE_JUMP_ADDRESS=FICA_IMG_BOOTLOADER_ADDR"/>
 									<listOptionValue builtIn="false" value="RELOCATE_VECTOR_TABLE=1"/>

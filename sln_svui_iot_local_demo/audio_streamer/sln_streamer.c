@@ -1,10 +1,10 @@
 /*
  * Copyright 2018-2023 NXP.
- * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance with the
- * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
- * activating and/or otherwise using the software, you are agreeing that you have read, and that you
- * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be used strictly
+ * in accordance with the applicable license terms. By expressly accepting such terms or by downloading,
+ * installing, activating and/or otherwise using the software, you are agreeing that you have read, and
+ * that you agree to comply with and are bound by, such license terms. If you do not agree to be bound by
+ * the applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
 #if ENABLE_STREAMER
@@ -97,6 +97,8 @@ static void SLN_STREAMER_MessageTask(void *arg)
                 {
                     /* Stop the streamer so we don't send speaker closed
                      * Don't flush the streamer just in case there is pending data */
+                    /* add extra delay to mask prompt tail */
+                    vTaskDelay(100);
                     handle->audioPlaying = false;
                     streamer_set_state(handle->streamer, 0, STATE_NULL, true);
                     local_active_file_desc.filename = NULL;
@@ -193,11 +195,10 @@ uint32_t SLN_STREAMER_SetLocalSound(streamer_handle_t *handle, char *filename)
         {
             local_active_file_desc.filename = filename;
             local_active_file_desc.len  = len;
+            local_active_file_desc.offset = 0;
+            status = kStatus_Success;
         }
-
-        local_active_file_desc.offset = 0;
     }
-    status = kStatus_Success;
 
     xSemaphoreGive(audioBufMutex);
 
@@ -236,6 +237,8 @@ uint32_t SLN_STREAMER_Stop(streamer_handle_t *handle)
 
 //    configPRINTF(("[STREAMER] stop playback\r\n"));
 
+    /* add extra delay to mask prompt tail */
+    vTaskDelay(100);
     handle->audioPlaying = false;
     streamer_set_state(handle->streamer, 0, STATE_NULL, true);
 
@@ -254,9 +257,10 @@ void SLN_STREAMER_Pause(streamer_handle_t *handle)
 {
 //    configPRINTF(("[STREAMER] pause playback\r\n"));
 
+    /* add extra delay to mask prompt tail */
+    vTaskDelay(100);
     handle->audioPlaying = false;
     streamer_set_state(handle->streamer, 0, STATE_PAUSED, true);
-
 }
 
 status_t SLN_STREAMER_Create(streamer_handle_t *handle, streamer_decoder_t decoder)

@@ -1,0 +1,8 @@
+*.pyc
+__pycache__/
+/*/__pycache__
+*.bin
+*.csf
+*.srec
+*.s19
+*~

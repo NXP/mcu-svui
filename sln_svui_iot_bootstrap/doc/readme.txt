@@ -4,25 +4,24 @@ Overview
 
 Toolchain supported
 ===================
-- MCUXpresso  11.2.0
-- GCC ARM Embedded  9.2.1
+- MCUXpresso  11.8.0
 
 Hardware requirements
 =====================
 - USB-C Cable
-- SLN-ALEXA-IOT Development Kit
+- SLN-SVUI-IOT Development Kit
 - Personal Computer
 - SEGGER J-Link
-- USB/UART converter
+- USB/UART converter (optional - this is used to check the logs)
 
 Board settings
 ==============
-Ensure J27 is set to position '1' (and is not set to serial downloader mode)
+Ensure J61 is set to position '12' (i.e. is not set to serial downloader mode)
 
 Connect the board with PC by using USB/UART converter:
-- board uart RX (pin 10 on J26) - connect it to TX pin on converter
-- board uart TX (pin 12 on J26) - connect it to RX pin on converter
-- board GND (pin 15 on J26)
+- board uart RX (pin 6 on J64) - connect it to TX pin on converter
+- board uart TX (pin 8 on J64) - connect it to RX pin on converter
+- board GND (pin 15 on J64)
 
 Prepare the Demo
 ================
@@ -42,19 +41,12 @@ Running the demo
 ================
 The log below shows the output of this demo in the terminal window:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-BOOTSTRAP v1.0.6 > Booting...
-BOOTSTRAP v1.0.6 > Context 0 KIB empty!
-BOOTSTRAP v1.0.6 > Context 0 is empty.
-BOOTSTRAP v1.0.6 > Context 1 KIB empty!
-BOOTSTRAP v1.0.6 > Context 1 is empty.
-BOOTSTRAP v1.0.6 > Not running encrypted XIP, no restore.
-BOOTSTRAP v1.0.6 > Reading FICA table...
-BOOTSTRAP v1.0.6 > Attempting to load bootloader...
-BOOTSTRAP v1.0.6 > Attempting to jump to 0x60040481...
+*** BOOTSTRAP v0.0.1 ***
+
+BOOTSTRAP v0.0.1 > ERROR: JTAG active violation!
+BOOTSTRAP v0.0.1 > Running NON encrypted XIP.
+BOOTSTRAP v0.0.1 > Attempting to jump to 0x60040451
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Version and jump address may vary.
 
 NOTE: If debugger is attached, a security violation will be present in the log. This is expected when debugging.
-Customization options
-=====================
-

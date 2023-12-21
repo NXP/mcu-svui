@@ -1,10 +1,10 @@
 /*
  * Copyright 2018-2023 NXP.
- * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance
- * with the license terms that accompany it. By expressly accepting such terms or by downloading, installing,
- * activating and/or otherwise using the software, you are agreeing that you have read, and that you
- * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be used strictly
+ * in accordance with the applicable license terms. By expressly accepting such terms or by downloading,
+ * installing, activating and/or otherwise using the software, you are agreeing that you have read, and
+ * that you agree to comply with and are bound by, such license terms. If you do not agree to be bound by
+ * the applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
 #include <stdbool.h>
@@ -12,11 +12,11 @@
 
 /* FreeRTOS kernel includes. */
 #include "FreeRTOS.h"
-#include "board.h"
 #include "queue.h"
 #include "task.h"
 
-/* Freescale includes. */
+/* NXP includes. */
+#include "board.h"
 #include "sln_mic_config.h"
 #include "sln_afe.h"
 #include "sln_amplifier.h"
@@ -45,9 +45,9 @@
 /* The value below is for 10 minutes * 60 seconds * 100 frames of 10 ms, hence VAD will
  * activate after 10 minutes of continuous silence */
 #define VAD_FORCED_TRUE_CALLS 10 * 60 * 100
-/* Last VAD_DEBOUNCE_CALLS of VAD_FORCED_TRUE_CALLS, actively check for Voice Activity
- * in order to reset the timer and avoid bounce between False and Tue. */
-#define VAD_DEBOUNCE_CALLS 100
+
+/* Number of consecutive frames with activity detected before getting out of detection 'sleep' */
+#define VAD_ACTIVITY_FRAMES    10
 #endif /* VAD_ENABLED */
 
 /*******************************************************************************
@@ -75,7 +75,7 @@ static sln_afe_status_t _sln_afe_init(void);
 static sln_afe_status_t _sln_afe_process_audio(int16_t *micStream, int16_t *ampStream, void **cleanStream);
 static sln_afe_status_t _sln_afe_trigger_found(void);
 #if VAD_ENABLED
-static sln_afe_status_t _sln_afe_vad(int16_t *cleanStream, bool *voiceActivity);
+static sln_afe_status_t _sln_afe_vad(int16_t *micStream, bool *voiceActivity);
 #endif /* VAD_ENABLED */
 
 /*******************************************************************************
@@ -106,6 +106,12 @@ void audio_processing_task(void *pvParameters)
     sln_afe_status_t afeStatus;
     bool voiceActivity = false;
     bool prevVoiceActivity = false;
+
+    uint32_t vadStartTicks       = 0;
+    uint32_t vadEndTicks         = 0;
+    uint32_t totalVadSessionsSec = 0;
+    uint32_t totalBoardRunSec    = 0;
+    uint32_t vadSessionSec       = 0;
 
     /* SLN_AFE Initialization. */
     afeStatus = _sln_afe_init();
@@ -147,7 +153,7 @@ void audio_processing_task(void *pvParameters)
         taskNotification &= ~currentEvent;
 
 #if ENABLE_STREAMER
-        /* Bypass audio processing while streaming audio. */
+        /* Temporarily bypass audio processing while streaming audio. */
         if (LOCAL_SOUNDS_isPlaying())
         {
             continue;
@@ -177,8 +183,8 @@ void audio_processing_task(void *pvParameters)
 #endif /* ENABLE_AUDIO_DUMP */
 
 #if VAD_ENABLED
-        /* Use SLN_AFE on clean stream to detect Voice Activity and Gate ASR if needed. */
-        afeStatus = _sln_afe_vad(cleanStream, &voiceActivity);
+        /* Use SLN_AFE on mic stream to detect Voice Activity and Gate ASR if needed. */
+        afeStatus = _sln_afe_vad(micStream, &voiceActivity);
         if (afeStatus != kAfeSuccess)
         {
             configPRINTF(("ERROR [%d]: AFE audio VAD failed!\r\n", afeStatus));
@@ -190,15 +196,26 @@ void audio_processing_task(void *pvParameters)
         {
             if (voiceActivity == true)
             {
-                configPRINTF(("VAD: activity detected, voice commands detection enabled\r\n"));
+                vadEndTicks         = xTaskGetTickCount();
+                vadSessionSec       = ((vadEndTicks - vadStartTicks) * (DEFAULT_SYSTEM_CLOCK / BOARD_REDUCEDCLOCK_CORE_CLOCK)) / configTICK_RATE_HZ;
+                totalBoardRunSec    += vadSessionSec;
+                totalVadSessionsSec += vadSessionSec;
+                configPRINTF(("VAD: activity detected, detection enabled after %d sec, total bypassing since power on %d sec, timestamp %d sec\r\n",
+                              vadSessionSec, totalVadSessionsSec, totalBoardRunSec));
             }
             else
             {
-                configPRINTF(("VAD: no activity in last %d seconds, voice commands detection disabled\r\n", VAD_FORCED_TRUE_CALLS / 100));
+                vadStartTicks = xTaskGetTickCount();
+                totalBoardRunSec += ((vadStartTicks - vadEndTicks) / configTICK_RATE_HZ);
+                configPRINTF(("VAD: no activity in last %d sec, detection disabled, timestamp %d sec\r\n",
+                              VAD_FORCED_TRUE_CALLS / 100, totalBoardRunSec));
             }
 
             prevVoiceActivity = voiceActivity;
         }
+#else
+        /* If VAD is disabled set voiceActivity flag to true */
+        voiceActivity = true;
 #endif /* VAD_ENABLED */
 
         if (voiceActivity == true)
@@ -291,28 +308,49 @@ static sln_afe_status_t _sln_afe_init(void)
 static sln_afe_status_t _sln_afe_process_audio(int16_t *micStream, int16_t *ampStream, void **cleanStream)
 {
     sln_afe_status_t afeStatus = kAfeSuccess;
+    int16_t *refSignal         = NULL;
 
+#if ENABLE_AMPLIFIER
     if (SLN_AMP_GetState() == kSlnAmpIdle)
     {
-        /* Bypass AEC if there is no streaming (by sending NULL as third parameter).
+        /* Bypass AEC if there is no streaming (by sending NULL as refSignal).
          * Bypassing AEC greatly reduces CPU usage of SLN_AFE_Process_Audio function. */
-        afeStatus = SLN_AFE_Process_Audio(micStream, NULL, cleanStream);
+        refSignal = NULL;
     }
     else
     {
-        afeStatus = SLN_AFE_Process_Audio(micStream, ampStream, cleanStream);
+        refSignal = ampStream;
     }
+#endif /* ENABLE_AMPLIFIER */
+
+    afeStatus = SLN_AFE_Process_Audio(micStream, refSignal, cleanStream);
 
     return afeStatus;
 }
 
 static sln_afe_status_t _sln_afe_trigger_found()
 {
-    sln_afe_status_t afeStatus = kAfeSuccess;
+    sln_afe_status_t afeStatus          = kAfeSuccess;
+    uint32_t wakeWordStartOffsetSamples = 0;
+    uint32_t wakeWordStartOffsetMs      = 0;
 
     if (g_wakeWordLength != 0)
     {
-        afeStatus        = SLN_AFE_Trigger_Found(g_wakeWordLength + (s_outBlocksCnt * PCM_SINGLE_CH_SMPL_COUNT));
+        wakeWordStartOffsetSamples = g_wakeWordLength + (s_outBlocksCnt * PCM_SINGLE_CH_SMPL_COUNT);
+        wakeWordStartOffsetMs      = wakeWordStartOffsetSamples / (PCM_SAMPLE_RATE_HZ / 1000);
+
+        if (wakeWordStartOffsetMs <= WAKE_WORD_MAX_LENGTH_MS)
+        {
+            afeStatus        = SLN_AFE_Trigger_Found(wakeWordStartOffsetSamples);
+        }
+        else
+        {
+            configPRINTF(("Warning: Reported wake word length (%d ms) bigger than supported max wake word length (%d ms)!\r\n",
+                          wakeWordStartOffsetMs, WAKE_WORD_MAX_LENGTH_MS));
+
+            afeStatus        = SLN_AFE_Trigger_Found(WAKE_WORD_MAX_LENGTH_MS * (PCM_SAMPLE_RATE_HZ / 1000));
+        }
+
         g_wakeWordLength = 0;
     }
 
@@ -320,55 +358,51 @@ static sln_afe_status_t _sln_afe_trigger_found()
 }
 
 #if VAD_ENABLED
-static sln_afe_status_t _sln_afe_vad(int16_t *cleanStream, bool *voiceActivity)
+static sln_afe_status_t _sln_afe_vad(int16_t *micStream, bool *voiceActivity)
 {
     sln_afe_status_t afeStatus = kAfeSuccess;
 
-    static uint32_t timeout = 0;
+    static uint32_t timeout = VAD_FORCED_TRUE_CALLS;
     bool vadResult          = false;
+    static bool prevVadResult      = false;
+    static int  prevVadCount       = 0;
 
-    /* 1. After a Voice Activity was detected, enter in a "ForcedTrue" period for VAD_FORCED_TRUE_CALLS
-     *    and return True directly. We assume that during this period user will speak so there is no need to
-     *    actually check for Voice Activity.
-     * 2. During last VAD_DEBOUNCE_CALLS calls of "ForcedTrue" period, actively check for Voice Activity.
-     *    In this period, if Voice Activity is detected, reset "ForcedTrue" period's timeout counter.
-     *    In this period, if Voice Activity is not detected, still return True.
-     *    This active check is done in order to avoid a bounce between True and False.
-     * 3. If "ForcedTrue" period expires, check for Voice Activity and return False if none detected,
-     *    otherwise return True and also enter "ForcedTrue" period (described above). */
-    if (timeout <= VAD_DEBOUNCE_CALLS)
+    afeStatus = SLN_AFE_Voice_Detected(micStream, &vadResult);
+
+    if (vadResult == prevVadResult)
     {
-        /* If we are not in ForcedTrue period or it is coming to an end, actively check audio for Voice Activity. */
-        afeStatus = SLN_AFE_Voice_Detected(cleanStream, &vadResult);
-
-        if (afeStatus != kAfeSuccess)
-        {
-            *voiceActivity = true;
-        }
-        else if (vadResult == true)
-        {
-            *voiceActivity = true;
-            timeout        = VAD_FORCED_TRUE_CALLS;
-        }
-        else if (timeout == 0)
-        {
-            *voiceActivity = false;
-        }
-        else
-        {
-            *voiceActivity = true;
-        }
+        prevVadCount++;
     }
     else
     {
-        /* "ForcedTrue" period, no need to check for Voice Activity, return True directly. */
+        prevVadCount = 0;
+    }
+
+    prevVadResult = vadResult;
+
+    /* After a Voice Activity was detected, enter in a "ForcedTrue" period for VAD_FORCED_TRUE_CALLS
+     * and return True directly. We assume that during this period user will speak so there is no need to
+     * actually check for Voice Activity. */
+    if (timeout == 0)
+    {
+        *voiceActivity = false;
+    }
+    else
+    {
         *voiceActivity = true;
+    }
+
+    /* Reset ForcedTrue period if needed */
+    if ((vadResult == true) && (prevVadCount >= VAD_ACTIVITY_FRAMES))
+    {
+        timeout        = VAD_FORCED_TRUE_CALLS;
     }
 
     if (timeout > 0)
     {
         timeout--;
     }
+
 
     return afeStatus;
 }

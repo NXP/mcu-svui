@@ -65,6 +65,7 @@ lpi2c_master_handle_t g_i2cHandle = {0};
 #endif
 #endif
 
+#if ENABLE_AMPLIFIER
 #if defined(SDK_SAI_BASED_COMPONENT_USED) && SDK_SAI_BASED_COMPONENT_USED
 AT_NONCACHEABLE_SECTION_ALIGN(static uint8_t dummy_txbuffer[32], 32);
 
@@ -73,6 +74,7 @@ mqs_config_t mqsConfig = {
 
 codec_config_t boardCodecConfig = {.codecDevType = kCODEC_MQS, .codecDevConfig = &mqsConfig};
 #endif /* SDK_SAI_BASED_COMPONENT_USED */
+#endif /* ENABLE_AMPLIFIER */
 
 /*******************************************************************************
  * Code
@@ -300,81 +302,9 @@ status_t BOARD_LPI2C_ReceiveSCCB(LPI2C_Type *base,
     return reVal;
 }
 
-void BOARD_Accel_I2C_Init(void)
-{
-    BOARD_LPI2C_Init(BOARD_ACCEL_I2C_BASEADDR, BOARD_ACCEL_I2C_CLOCK_FREQ);
-}
-
-status_t BOARD_Accel_I2C_Send(uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint32_t txBuff)
-{
-    uint8_t data = (uint8_t)txBuff;
-
-    return BOARD_LPI2C_Send(BOARD_ACCEL_I2C_BASEADDR, deviceAddress, subAddress, subaddressSize, &data, 1);
-}
-
-status_t BOARD_Accel_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
-{
-    return BOARD_LPI2C_Receive(BOARD_ACCEL_I2C_BASEADDR, deviceAddress, subAddress, subaddressSize, rxBuff, rxBuffSize);
-}
-
-void BOARD_Codec_I2C_Init(void)
-{
-    CLOCK_SetMux(kCLOCK_Lpi2cMux, BOARD_CODEC_I2C_CLOCK_SOURCE_SELECT);
-    CLOCK_SetDiv(kCLOCK_Lpi2cDiv, BOARD_CODEC_I2C_CLOCK_SOURCE_DIVIDER);
-    BOARD_LPI2C_Init(BOARD_CODEC_I2C_BASEADDR, BOARD_CODEC_I2C_CLOCK_FREQ);
-    NVIC_SetPriority(BOARD_CODEC_I2C_IRQN, configMAX_SYSCALL_INTERRUPT_PRIORITY - 1);
-}
-
-status_t BOARD_Codec_I2C_Send(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
-{
-    return BOARD_LPI2C_Send(BOARD_CODEC_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
-                            txBuffSize);
-}
-
-status_t BOARD_Codec_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
-{
-    return BOARD_LPI2C_Receive(BOARD_CODEC_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff, rxBuffSize);
-}
-
-void BOARD_Camera_I2C_Init(void)
-{
-    CLOCK_SetMux(kCLOCK_Lpi2cMux, BOARD_CAMERA_I2C_CLOCK_SOURCE_SELECT);
-    CLOCK_SetDiv(kCLOCK_Lpi2cDiv, BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER);
-    BOARD_LPI2C_Init(BOARD_CAMERA_I2C_BASEADDR, BOARD_CAMERA_I2C_CLOCK_FREQ);
-}
-
-status_t BOARD_Camera_I2C_Send(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
-{
-    return BOARD_LPI2C_Send(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
-                            txBuffSize);
-}
-
-status_t BOARD_Camera_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
-{
-    return BOARD_LPI2C_Receive(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff,
-                               rxBuffSize);
-}
-
-status_t BOARD_Camera_I2C_SendSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize)
-{
-    return BOARD_LPI2C_SendSCCB(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, (uint8_t *)txBuff,
-                                txBuffSize);
-}
-
-status_t BOARD_Camera_I2C_ReceiveSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize)
-{
-    return BOARD_LPI2C_ReceiveSCCB(BOARD_CAMERA_I2C_BASEADDR, deviceAddress, subAddress, subAddressSize, rxBuff,
-                                   rxBuffSize);
-}
 #endif /* SDK_I2C_BASED_COMPONENT_USED */
 
+#if ENABLE_AMPLIFIER
 #if defined(SDK_SAI_BASED_COMPONENT_USED) && SDK_SAI_BASED_COMPONENT_USED
 void BOARD_SAI_Enable_Mclk_Output(I2S_Type *base, bool enable)
 {
@@ -436,7 +366,7 @@ void BOARD_SAI_Init(sai_init_handle_t saiInitHandle)
     saiAmpFormat.watermark = FSL_FEATURE_SAI_FIFO_COUNT / 2U;
 #endif
 
-    /*Clock setting for SAI3*/
+    /* Clock setting for SAI3 */
     CLOCK_SetMux(kCLOCK_Sai3Mux, BOARD_AMP_SAI_CLOCK_SOURCE_SELECT);
     CLOCK_SetDiv(kCLOCK_Sai3PreDiv, BOARD_AMP_SAI_CLOCK_SOURCE_PRE_DIVIDER);
     CLOCK_SetDiv(kCLOCK_Sai3Div, BOARD_AMP_SAI_CLOCK_SOURCE_DIVIDER);
@@ -496,7 +426,8 @@ void BOARD_AMP_SAI_Rx_IRQ_Handler(void)
         SAI_UserRxIRQHandler();
     }
 }
-#endif
+#endif /* SDK_SAI_BASED_COMPONENT_USED */
+#endif /* ENABLE_AMPLIFIER */
 
 /* MPU configuration. */
 void BOARD_ConfigMPU(void)
@@ -702,7 +633,6 @@ void BOARD_ReduceClock(void)
     }
 }
 
-
 void BOARD_RelocateVectorTableToRam(void)
 {
     uint32_t n;
@@ -753,9 +683,11 @@ uint8_t BUTTON_OTWPressed(void)
     return 0;
 }
 
+#if ENABLE_AMPLIFIER
 #if defined(SDK_SAI_BASED_COMPONENT_USED) && SDK_SAI_BASED_COMPONENT_USED
 void *BOARD_GetBoardCodecConfig(void)
 {
     return (void *)&boardCodecConfig;
 }
-#endif
+#endif /* SDK_SAI_BASED_COMPONENT_USED */
+#endif /* ENABLE_AMPLIFIER */

@@ -1,10 +1,10 @@
 /*
- * Copyright 2019-2020 NXP.
- * This software is owned or controlled by NXP and may only be used strictly in accordance with the
- * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
- * activating and/or otherwise using the software, you are agreeing that you have read, and that you
- * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * Copyright 2019-2020, 2023 NXP.
+ * NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be used strictly
+ * in accordance with the applicable license terms. By expressly accepting such terms or by downloading,
+ * installing, activating and/or otherwise using the software, you are agreeing that you have read, and
+ * that you agree to comply with and are bound by, such license terms. If you do not agree to be bound by
+ * the applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
 #include "board.h"
@@ -200,6 +200,7 @@ static sln_comms_message_status_t processFwUpdateStartReq(void *clientInstance, 
     cJSON *jsonMessage, *jsonFwUpdateStartReq, *jsonFwUpdateStartStatus;
     sln_comms_message_status_t status = kComms_Success;
     int32_t fica_status               = SLN_FLASH_NO_ERROR;
+    int32_t imageType = FICA_IMG_TYPE_NONE;
 
     jsonMessage = cJSON_CreateObject();
 
@@ -254,31 +255,24 @@ static sln_comms_message_status_t processFwUpdateStartReq(void *clientInstance, 
     /* Parse the bank in which the image will be programmed */
     if (kComms_Success == status)
     {
-        jsonFwUpdateStartReq = cJSON_GetObjectItemCaseSensitive(json, "app_bank_type");
-        if (cJSON_IsNumber(jsonFwUpdateStartReq))
+        status = FICA_GetCurAppStartType(&imageType);
+
+        if (SLN_FLASH_NO_ERROR == status)
         {
-            int32_t imageType = FICA_IMG_TYPE_NONE;
-
-            configPRINTF(("Found element 'app_bank_type': %d\r\n", jsonFwUpdateStartReq->valueint));
-
-            status = FICA_GetCurAppStartType(&imageType);
-
-            /* Only accept if it's not the current bank */
-            if ((SLN_FLASH_NO_ERROR == status) && (jsonFwUpdateStartReq->valueint > FICA_IMG_TYPE_NONE) &&
-                (jsonFwUpdateStartReq->valueint < FICA_NUM_IMG_TYPES) && (jsonFwUpdateStartReq->valueint != imageType))
+            if(imageType == FICA_IMG_TYPE_APP_A)
             {
-                currentFwUpdateJob->appBankType = jsonFwUpdateStartReq->valueint;
+                currentFwUpdateJob->appBankType = FICA_IMG_TYPE_APP_B;
             }
             else
             {
-                status = kComms_InvalidParameter;
+                currentFwUpdateJob->appBankType = FICA_IMG_TYPE_APP_A;
             }
         }
         else
         {
             status = kComms_InvalidParameter;
         }
-    }
+     }
 
     /* Parse the signature */
     if (kComms_Success == status)
@@ -325,12 +319,21 @@ static sln_comms_message_status_t processFwUpdateStartReq(void *clientInstance, 
             uint32_t fica_status = SLN_FLASH_NO_ERROR;
             configPRINTF(("Found element 'image_size': %i\r\n", jsonFwUpdateStartReq->valueint));
 
-            fica_status = FICA_get_app_img_max_size(currentFwUpdateJob->appBankType, &maxSize);
-
-            /* Fail if it failed to get the max size */
-            if (SLN_FLASH_NO_ERROR != fica_status)
+            /* Fail if the image size is smaller than a sector size */
+            if( jsonFwUpdateStartReq->valueint < FLASH_SECTOR_SIZE )
             {
                 status = kComms_FailedProcessing;
+            }
+
+            if (kComms_Success == status)
+            {
+                fica_status = FICA_get_app_img_max_size(currentFwUpdateJob->appBankType, &maxSize);
+
+                /* Fail if it failed to get the max size */
+                if (SLN_FLASH_NO_ERROR != fica_status)
+                {
+                    status = kComms_FailedProcessing;
+                }
             }
 
             /* Fail if it exceeds the maximum size */
@@ -368,24 +371,17 @@ static sln_comms_message_status_t processFwUpdateStartReq(void *clientInstance, 
 
         if (kComms_Success == status)
         {
-            if (currentFwUpdateJob->appBankType == imageType)
+            if ((FICA_IMG_TYPE_APP_A == imageType) || (FICA_IMG_TYPE_APP_B == imageType))
             {
-                status = kComms_InvalidParameter;
+                status = handleClientFwUpdateStartReq(clientInstance, json);
             }
             else
             {
-                if ((FICA_IMG_TYPE_APP_A == imageType) || (FICA_IMG_TYPE_APP_B == imageType))
-                {
-                    status = handleClientFwUpdateStartReq(clientInstance, json);
-                }
-                else
-                {
 #if COMMS_MESSAGE_HANDLER_FWUPDATE_SERVER
-                    status = handleServerFwUpdateStartReq(currentFwUpdateJob->appBankType);
+                status = handleServerFwUpdateStartReq(currentFwUpdateJob->appBankType);
 #else
-                    status = kComms_InvalidParameter;
+                status = kComms_InvalidParameter;
 #endif
-                }
             }
         }
     }

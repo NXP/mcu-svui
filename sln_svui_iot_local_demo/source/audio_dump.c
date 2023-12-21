@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 NXP.
+ * Copyright 2022-2023 NXP.
  * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -42,7 +42,10 @@ USB_DMA_INIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
 static uint8_t s_countryCode[COMM_FEATURE_DATA_SIZE] = {(COUNTRY_SETTING >> 0U) & 0x00FFU,
                                                         (COUNTRY_SETTING >> 8U) & 0x00FFU};
 static bool s_startUsbForward                        = false;
+
+#if ENABLE_AMPLIFIER
 static bool s_playSound                              = false;
+#endif /* ENABLE_AMPLIFIER */
 
 extern usb_device_endpoint_struct_t g_cdcVcomDicEndpoints[];
 extern usb_device_class_struct_t g_UsbDeviceCdcVcomConfig;
@@ -311,7 +314,7 @@ usb_status_t AUDIO_DUMP_USB_DeviceCdcVcomCallback(class_handle_t handle, uint32_
     return error;
 }
 
-void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void *cloudStream)
+void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void *cleanStream)
 {
     static uint8_t *s_usbBuffer = NULL;
 
@@ -331,10 +334,17 @@ void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void 
             memcpy(&s_usbBuffer[u32Element], (uint8_t *)micStream, PCM_SAMPLE_COUNT * PCM_SAMPLE_SIZE_BYTES);
             u32Element += PCM_SAMPLE_COUNT * PCM_SAMPLE_SIZE_BYTES;
 
-            memcpy(&s_usbBuffer[u32Element], (uint8_t *)ampStream, PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES);
+            if (ampStream != NULL)
+            {
+                memcpy(&s_usbBuffer[u32Element], (uint8_t *)ampStream, PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES);
+            }
+            else
+            {
+                memset(&s_usbBuffer[u32Element], 0, PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES);
+            }
             u32Element += PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES;
 
-            memcpy(&s_usbBuffer[u32Element], (uint8_t *)cloudStream, PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES);
+            memcpy(&s_usbBuffer[u32Element], (uint8_t *)cleanStream, PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES);
             u32Element += PCM_SINGLE_CH_SMPL_COUNT * PCM_SAMPLE_SIZE_BYTES;
 
             status = USB_DeviceCdcAcmSend(audio_dump_vcom->cdcAcmHandle, USB_CDC_VCOM_DIC_BULK_IN_ENDPOINT, s_usbBuffer,
@@ -362,6 +372,7 @@ void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void 
     }
 }
 
+#if ENABLE_AMPLIFIER
 void AUDIO_DUMP_AecAlignSoundTask(void *arg)
 {
     status_t status    = kStatus_Success;
@@ -397,4 +408,5 @@ void AUDIO_DUMP_AecAlignSoundStop(void)
 {
     s_playSound = false;
 }
+#endif /* ENABLE_AMPLIFIER */
 #endif /* ENABLE_AUDIO_DUMP */

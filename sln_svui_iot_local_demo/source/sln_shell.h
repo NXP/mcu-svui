@@ -1,10 +1,10 @@
 /*
  * Copyright 2018-2023 NXP
- * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance
- * with the license terms that accompany it. By expressly accepting such terms or by downloading, installing,
- * activating and/or otherwise using the software, you are agreeing that you have read, and that you
- * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be used strictly
+ * in accordance with the applicable license terms. By expressly accepting such terms or by downloading,
+ * installing, activating and/or otherwise using the software, you are agreeing that you have read, and
+ * that you agree to comply with and are bound by, such license terms. If you do not agree to be bound by
+ * the applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
 
@@ -63,30 +63,39 @@
 
 #define MAX_LOG_HISTORY 20
 
+/* Limited to 24 events */
 typedef enum _shell_event
 {
 #if USE_WIFI_CONNECTION
-    PRINT_EVENT         = (1 << 0U),
-    ERASE_EVENT         = (1 << 1U),
-    SETUP_EVENT         = (1 << 2U),
+    PRINT_EVENT          = (1 << 0U),
+    ERASE_EVENT          = (1 << 1U),
+    SETUP_EVENT          = (1 << 2U),
 #endif /* USE_WIFI_CONNECTION */
-    RESET_EVENT         = (1 << 3U),
-    EXIT_EVENT          = (1 << 4U),
-    MEM_VIEW_EVENT      = (1 << 5U),
-    ENA_HEAP_TRACE_EVT  = (1 << 6U),
-    DIS_HEAP_TRACE_EVT  = (1 << 7U),
-    ENA_USB_LOG_EVT     = (1 << 8U),
-    DIS_USB_LOG_EVT     = (1 << 9U),
-    LOGS_EVENT          = (1 << 10U),
-    HARDFAULT_LOGS_EVT  = (1 << 11U),
-    SERIAL_NUMBER_EVT   = (1 << 12U),
-    VERSION_EVT         = (1 << 13U),
+    RESET_EVENT          = (1 << 3U),
+    VERSION_EVT          = (1 << 4U),
 #if ENABLE_AUDIO_DUMP
-    AUDIO_DUMP_TEST_EVT = (1 << 14U),
+    AUDIO_DUMP_TEST_EVT  = (1 << 5U),
 #endif /* ENABLE_AUDIO_DUMP */
 #if SLN_TRACE_CPU_USAGE
-    TRACE_CPU_USAGE_EVT = (1 << 15U),
+    TRACE_CPU_USAGE_EVT  = (1 << 6U),
 #endif /* SLN_TRACE_CPU_USAGE */
+    FACTORY_RESET_EVT    = (1 << 7U),
+    PRINT_COMMANDS_EVT   = (1 << 8U),
+    CHANGE_DEMO_EVT      = (1 << 9U),
+    CHANGE_LANG_EVT      = (1 << 10U),
+    SET_VOLUME_EVT       = (1 << 11U),
+    FOLLOWUP_EVT         = (1 << 12U),
+    SET_TIMEOUT_EVT      = (1 << 13U),
+    MUTE_EVT             = (1 << 14U),
+    PTT_EVT              = (1 << 15U),
+#if ENABLE_DSMT_ASR
+    PRINT_CMD_RES_EVT    = (1 << 16U),
+#endif /* ENABLE_DSMT_ASR */
+    OTW_UPDATE_EVT       = (1 << 17U),
+#if USE_WIFI_CONNECTION
+    OTA_UPDATE_EVT       = (1 << 18U),
+#endif /* USE_WIFI_CONNECTION */
+    CHANGE_BANK_EVT      = (1 << 19U),
 } shell_event_t;
 
 typedef struct __shell_heap_trace

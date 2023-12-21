@@ -101,17 +101,14 @@
 									<listOptionValue builtIn="false" value="XIP_EXTERNAL_FLASH=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_ENABLE=1"/>
 									<listOptionValue builtIn="false" value="XIP_BOOT_HEADER_DCD_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="APP_MAJ_VER=0x00"/>
-									<listOptionValue builtIn="false" value="APP_MIN_VER=0x00"/>
-									<listOptionValue builtIn="false" value="APP_BLD_VER=0x0001"/>
 									<listOptionValue builtIn="false" value="DISABLE_IMAGE_VERIFICATION=1"/>
 									<listOptionValue builtIn="false" value="USE_WIFI_CONNECTION=0"/>
 									<listOptionValue builtIn="false" value="BOOTLOADER_AWS_IOT_OTA_ENABLED=0"/>
 									<listOptionValue builtIn="false" value="BOOTLOADER_MSD_ENABLED=1"/>
 									<listOptionValue builtIn="false" value="BOOTLOADER_FWUPDATE_ENABLED=1"/>
-									<listOptionValue builtIn="false" value="BOOTLOADER_TCP_OTA_ENABLE=1"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_TCP_OTA_ENABLE=0"/>
 									<listOptionValue builtIn="false" value="BOOTLOADER_OTW_ENABLE=1"/>
-									<listOptionValue builtIn="false" value="BOOTLOADER_WIFI_ENABLED=1"/>
+									<listOptionValue builtIn="false" value="BOOTLOADER_WIFI_ENABLED=0"/>
 									<listOptionValue builtIn="false" value="LWIP_DNS=1"/>
 									<listOptionValue builtIn="false" value="LWIP_DHCP=1"/>
 									<listOptionValue builtIn="false" value="DEBUG_CONSOLE_TRANSMIT_BUFFER_LEN=4096"/>
@@ -458,7 +455,6 @@
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="freertos"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="linkscripts"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="littlefs"/>
-						<entry excluding="src/netif/ppp/polarssl/arc4.c|src/netif/ppp/polarssl/des.c|src/netif/ppp/polarssl/md4.c|src/netif/ppp/polarssl/md5.c|src/netif/ppp/polarssl/sha1.c" flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="lwip"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="mbedtls"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="sdmmc"/>
 						<entry flags="LOCAL|VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="source"/>
@@ -520,10 +516,7 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="Debug_IoT">
-			<resource resourceType="PROJECT" workspacePath="/sln_svui_iot_bootloader"/>
-		</configuration>
-		<configuration configurationName="Debug_RD">
+		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/sln_svui_iot_bootloader"/>
 		</configuration>
 	</storageModule>

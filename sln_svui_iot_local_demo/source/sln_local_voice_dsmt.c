@@ -15,7 +15,7 @@
 #include "IndexCommands.h"
 #include "demo_actions.h"
 #include "sln_flash.h"
-/* Include file system */
+
 #include "sln_flash_files.h"
 #include "sln_flash_fs_ops.h"
 #include "sln_rgb_led_driver.h"
@@ -33,39 +33,61 @@
 #define DSMT_EVALUATION_DETECTIONS_LIMIT  (100)
 #endif /* USE_DSMT_EVALUATION_MODE */
 
-/*
- * For more details regarding WWs and CMDs memory space make sure to check
- * Section 5.1.2 from the Developer's Guide
- */
+#if USE_DSMT_STATIC_POOLS
+
+#if MULTILINGUAL
 #define WAKE_WORD_MEMPOOL_SIZE    (50 * 1024)
-#define CN_WAKE_WORD_MEMPOOL_SIZE (95 * 1024)
+#else
+/* allocate a buffer big enough to hold a CN with Tone recognition model as well.
+ * in case this is not used, mempool can be reduced to 70KB for DSMT Level 4 and
+ * to 50KB for DSMT Level 1  */
+#define WAKE_WORD_MEMPOOL_SIZE    (90 * 1024)
+#endif /* !MULTILINGUAL */
+
+#define CN_WAKE_WORD_MEMPOOL_SIZE (90 * 1024)
 #define COMMAND_MEMPOOL_SIZE      (90 * 1024)
 
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang1[WAKE_WORD_MEMPOOL_SIZE], 8);
+SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang0[WAKE_WORD_MEMPOOL_SIZE], 8);
+#if MULTILINGUAL
+/* Put commands static pool in non cacheable ocram as we don't have any more space in cacheable
+ * when MULTILINGUAL is on */
 SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_NON_CACHEABLE"))) g_memPoolCmd[COMMAND_MEMPOOL_SIZE], 8);
+#else
+SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolCmd[COMMAND_MEMPOOL_SIZE], 8);
+#endif /* MULTILINGUAL */
 
 #if MULTILINGUAL
-// NOTE: Chinese with Tone Recognition model takes larger memory pool than the other languages.
-// Make sure Chinese model is placed in g_memPoolWLang2 with CN_WAKE_WORD_MEMPOOL_SIZE.
-// Also, make sure Chinese model is installed in the same order for install_language() and install_inference_engine().
-SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang2[CN_WAKE_WORD_MEMPOOL_SIZE], 8);
+/* NOTE: Chinese with Tone Recognition model takes larger memory pool than the other languages.
+ * Make sure Chinese model is placed in g_memPoolWLang1 with CN_WAKE_WORD_MEMPOOL_SIZE.
+ * Also, make sure Chinese model is installed in the same order for install_language() and install_inference_engine(). */
+SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang1[CN_WAKE_WORD_MEMPOOL_SIZE], 8);
+SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang2[WAKE_WORD_MEMPOOL_SIZE], 8);
 SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang3[WAKE_WORD_MEMPOOL_SIZE], 8);
-SDK_ALIGN(uint8_t __attribute__((section(".bss.$SRAM_OC_CACHEABLE"))) g_memPoolWLang4[WAKE_WORD_MEMPOOL_SIZE], 8);
-#endif
+
+uint8_t *g_memPoolWLang[MAX_CONCURRENT_LANGUAGES] =      {g_memPoolWLang0,
+                                                          g_memPoolWLang1,
+                                                          g_memPoolWLang2,
+                                                          g_memPoolWLang3};
+
+uint32_t g_memPoolWLangSizes[MAX_CONCURRENT_LANGUAGES] = {WAKE_WORD_MEMPOOL_SIZE,
+                                                          CN_WAKE_WORD_MEMPOOL_SIZE,
+                                                          WAKE_WORD_MEMPOOL_SIZE,
+                                                          WAKE_WORD_MEMPOOL_SIZE};
+#else
+uint8_t *g_memPoolWLang[MAX_CONCURRENT_LANGUAGES] =      {g_memPoolWLang0};
+uint32_t g_memPoolWLangSizes[MAX_CONCURRENT_LANGUAGES] = {WAKE_WORD_MEMPOOL_SIZE};
+#endif /* MULTILINGUAL */
+
+#endif /* USE_DSMT_STATIC_POOLS */
 
 extern QueueHandle_t g_xSampleQueue;
 extern volatile uint32_t g_wakeWordLength;
 extern TaskHandle_t appTaskHandle;
 extern oob_demo_control_t oob_demo_control;
 extern bool g_SW1Pressed;
-
-extern unsigned int cn_model_begin;
-extern unsigned int de_model_begin;
-extern unsigned int en_model_begin;
-extern unsigned int fr_model_begin;
 
 struct asr_language_model g_asrLangModel[NUM_LANGUAGES] = {0};
 struct asr_inference_engine g_asrInfWW[NUM_INFERENCES_WW]         = {0};
@@ -154,13 +176,13 @@ int32_t install_language(asr_control_t *pAsrCtrl,
 /*!
  * @brief Inference engine installation.
  */
-uint32_t install_inference_engine(asr_control_t *pAsrCtrl,
-                                  struct asr_inference_engine *pInfEngine,
-                                  asr_language_t lang,
-                                  asr_inference_t infType,
-                                  char **idToString,
-                                  unsigned char *addrMemPool,
-                                  uint32_t sizeMemPool)
+static uint32_t install_inference_engine(asr_control_t *pAsrCtrl,
+                                         struct asr_inference_engine *pInfEngine,
+                                         asr_language_t lang,
+                                         asr_inference_t infType,
+                                         char **idToString,
+                                         unsigned char *addrMemPool,
+                                         uint32_t sizeMemPool)
 {
     sln_asr_local_states_t status = kAsrLocalSuccess;
 
@@ -179,7 +201,7 @@ uint32_t install_inference_engine(asr_control_t *pAsrCtrl,
             pAsrCtrl->infEngineWW = pInfEngine;
         }
         else
-        { // linked list for CMD engines. Dialog demo needs a linked list of CMD engines.
+        {   // linked list for CMD engines. Dialog demo needs a linked list of CMD engines.
             pInfEngine->next       = pAsrCtrl->infEngineCMD;
             pAsrCtrl->infEngineCMD = pInfEngine;
         }
@@ -190,6 +212,69 @@ uint32_t install_inference_engine(asr_control_t *pAsrCtrl,
     return status;
 }
 
+#if !USE_DSMT_STATIC_POOLS
+/*!
+ * @brief Inference engine installation with dynamic memory allocation.
+ */
+static uint32_t install_inference_engine_dynamic(asr_control_t *pAsrCtrl,
+                                                 struct asr_inference_engine *pInfEngine,
+                                                 asr_language_t lang,
+                                                 asr_inference_t infType,
+                                                 char **idToString)
+{
+    sln_asr_local_states_t status    = kAsrLocalSuccess;
+    int32_t mem_usage                = pInfEngine->memPoolSize;
+    void *mem_pool                   = pInfEngine->memPool;
+    struct asr_language_model *pLang = NULL;
+    int idx                          = decode_bitshift(infType);
+
+    for (pLang = pAsrCtrl->langModel; pLang != NULL; pLang = pLang->next)
+    {
+        if (pLang->iWhoAmI == lang)
+            break;
+    }
+
+    if (pAsrCtrl && pInfEngine && lang && infType && pLang)
+    {
+        /* find out how big the pool needs to be */
+        mem_usage = SLN_ASR_LOCAL_Verify(pLang->addrGroup[0],
+                                         (unsigned char **)&pLang->addrGroup[idx],
+                                         1,
+                                         MAX_COMMAND_FRAMES);
+
+        /* Check if initial allocation or reallocation needed */
+        if ((NULL == pInfEngine->memPool) || (mem_usage > pInfEngine->memPoolSize))
+        {
+            if (pInfEngine->memPool)
+            {
+                vPortFree(pInfEngine->memPool);
+                pInfEngine->memPool = NULL;
+            }
+
+            mem_pool = pvPortMalloc(mem_usage);
+
+            if (NULL == mem_pool)
+            {
+                configPRINTF(("Failed to allocate %d bytes for inference engine memory pool!\r\n", mem_usage));
+                status = kAsrLocalOutOfMemory;
+                RGB_LED_SetColor(LED_COLOR_ORANGE);
+
+                while (1)
+                {
+                    vTaskDelay(10000);
+                }
+            }
+        }
+
+        status = install_inference_engine(pAsrCtrl, pInfEngine, lang, infType, idToString, mem_pool, mem_usage);
+    }
+    else
+        status = kAsrLocalInstallFailed;
+
+    return status;
+}
+#endif /* !USE_DSMT_STATIC_POOLS */
+
 /*!
  * @brief Checks memory pool size for WW / CMD engines.
  */
@@ -197,27 +282,17 @@ void verify_inference_handler(struct asr_inference_engine *p)
 {
     sln_asr_local_states_t status = kAsrLocalSuccess;
     int32_t mem_usage;
-    int32_t mem_size_ww;
 
     mem_usage = SLN_ASR_LOCAL_Verify(p->addrGroup[0], (unsigned char **)&p->addrGroup[1], 1, MAX_COMMAND_FRAMES);
 
-    if (p->iWhoAmI_lang == ASR_CHINESE)
+    if ((p->iWhoAmI_inf == ASR_WW) && (mem_usage > p->memPoolSize))
     {
-        mem_size_ww = CN_WAKE_WORD_MEMPOOL_SIZE;
-    }
-    else
-    {
-        mem_size_ww = WAKE_WORD_MEMPOOL_SIZE;
-    }
-
-    if ((p->iWhoAmI_inf == ASR_WW) && (mem_usage > mem_size_ww))
-    {
-        configPRINTF(("Memory size %d for WW exceeds the memory pool %d!\r\n", mem_usage, mem_size_ww));
+        configPRINTF(("Memory size %d for WW exceeds the memory pool %d!\r\n", mem_usage, p->memPoolSize));
         status = kAsrLocalOutOfMemory;
     }
-    else if ((p->iWhoAmI_inf != ASR_WW) && (mem_usage > COMMAND_MEMPOOL_SIZE))
+    else if ((p->iWhoAmI_inf != ASR_WW) && (mem_usage > p->memPoolSize))
     {
-        configPRINTF(("Memory size %d for CMD exceeds the memory pool %d!\r\n", mem_usage, COMMAND_MEMPOOL_SIZE));
+        configPRINTF(("Memory size %d for CMD exceeds the memory pool %d!\r\n", mem_usage, p->memPoolSize));
         status = kAsrLocalOutOfMemory;
     }
 
@@ -239,6 +314,46 @@ void verify_inference_handler(struct asr_inference_engine *p)
 void set_inference_handler(struct asr_inference_engine *p)
 {
     int status = kAsrLocalSuccess;
+
+#if !USE_DSMT_STATIC_POOLS
+    int32_t mem_usage = p->memPoolSize;
+    void *mem_pool    = p->memPool;
+
+    /* find out how big the pool needs to be */
+    mem_usage = SLN_ASR_LOCAL_Verify(p->addrGroup[0],
+                                     (unsigned char **)&p->addrGroup[1],
+                                     1,
+                                     MAX_COMMAND_FRAMES);
+
+    /* Check if initial allocation or reallocation needed */
+    if ((NULL == p->memPool) || (mem_usage > p->memPoolSize))
+    {
+        if (p->memPool)
+        {
+            vPortFree(p->memPool);
+            p->memPool = NULL;
+        }
+
+        mem_pool = pvPortMalloc(mem_usage);
+
+        if (NULL == mem_pool)
+        {
+            configPRINTF(("Failed to allocate %d bytes for inference engine memory pool!\r\n", mem_usage));
+            status = kAsrLocalOutOfMemory;
+            RGB_LED_SetColor(LED_COLOR_ORANGE);
+
+            while (1)
+            {
+                vTaskDelay(10000);
+            }
+        }
+        else
+        {
+            p->memPool = mem_pool;
+            p->memPoolSize = mem_usage;
+        }
+    }
+#endif /* USE_DSMT_STATIC_POOLS */
 
     p->handler = SLN_ASR_LOCAL_Init(p->addrGroup[0], (unsigned char **)&p->addrGroup[1], 1, MAX_COMMAND_FRAMES, p->memPool,
                                     p->memPoolSize, (int32_t *)&status);
@@ -294,7 +409,6 @@ void init_WW_engine(asr_control_t *pAsrCtrl, asr_inference_t infType)
 
 /*!
  * @brief Initialize CMD inference engine from the installed language models.
- *  After, pInfEngine does not need to be a linked list for Demo #1 and #2 but does for Demo #3 (dialog).
  */
 void init_CMD_engine(asr_control_t *pAsrCtrl, asr_inference_t infType)
 {
@@ -305,9 +419,9 @@ void init_CMD_engine(asr_control_t *pAsrCtrl, asr_inference_t infType)
 
     pInfEngine = pAsrCtrl->infEngineCMD;
 
-    pLang                      = pAsrCtrl->langModel; // langModel for CMD inf engine is selected when WW is detected.
-    pInfEngine->addrGroup[0]   = pLang->addrGroup[0]; // the selected language model's base
-    pInfEngine->addrGroup[1]   = pLang->addrGroup[idx];              // the selected language model's infType group
+    pLang                      = pAsrCtrl->langModel;              // langModel for CMD inf engine is selected when WW is detected.
+    pInfEngine->addrGroup[0]   = pLang->addrGroup[0];              // the selected language model's base
+    pInfEngine->addrGroup[1]   = pLang->addrGroup[idx];            // the selected language model's infType group
     pInfEngine->addrGroupMapID = pLang->addrGroupMapID[idx_mapID]; // the selected language model's mapID group
 
     verify_inference_handler(pInfEngine); // verify inference handler, checking mem pool size
@@ -400,16 +514,22 @@ char *asr_get_string_by_id(struct asr_inference_engine *pInfEngine, int32_t id)
     return pInfEngine->idToKeyword[id];
 }
 
+void print_asr_version(void)
+{
+    const char *version = SLN_ASR_LOCAL_Ver();
+    configPRINTF(("ASR engine: DSMT version %s\r\n", version));
+}
+
 void initialize_asr(void)
 {
     asr_inference_t demoType                     = appAsrShellCommands.demo;
-    asr_language_t lang[NUM_LANGUAGES] = {UNDEFINED_LANGUAGE};
+    asr_language_t lang[MAX_CONCURRENT_LANGUAGES]           = {UNDEFINED_LANGUAGE};
     asr_language_t langShell                     = 0;
 
     if (appAsrShellCommands.activeLanguage == UNDEFINED_LANGUAGE)
     {
-        appAsrShellCommands.activeLanguage = DEFAULT_ASR_LANGUAGE;
-        oob_demo_control.language        = DEFAULT_ASR_LANGUAGE;
+        appAsrShellCommands.activeLanguage       = DEFAULT_ASR_LANGUAGE;
+        oob_demo_control.language                = DEFAULT_ASR_LANGUAGE;
     }
 
     /* oob_demo_control will be updated after first detected WW */
@@ -424,40 +544,69 @@ void initialize_asr(void)
     }
 
     langShell = appAsrShellCommands.activeLanguage;
-    lang[0]   = langShell & ASR_ENGLISH; // first language
-    lang[1]   = langShell & ASR_CHINESE; // second
-    lang[2]   = langShell & ASR_GERMAN;  // third
-    lang[3]   = langShell & ASR_FRENCH;  // fourth
+
+    for (int i = 0; i < MAX_CONCURRENT_LANGUAGES; i++)
+    {
+        for (int j = 0; j < NUM_LANGUAGES; j++)
+        {
+            if (langShell & (ASR_FIRST_LANGUAGE << j))
+            {
+                lang[j] = langShell & (ASR_FIRST_LANGUAGE << j);
+                langShell &= ~(ASR_FIRST_LANGUAGE << j);
+                break;
+            }
+        }
+    }
 
     // NULL to ensure the end of linked list.
     g_asrControl.langModel    = NULL;
     g_asrControl.infEngineWW  = NULL;
     g_asrControl.infEngineCMD = NULL;
 
-#if MULTILINGUAL
-    // install multilingual
-    install_language(&g_asrControl, &g_asrLangModel[3], lang[3], (unsigned char *)&fr_model_begin, NUM_GROUPS);
-    install_language(&g_asrControl, &g_asrLangModel[2], lang[2], (unsigned char *)&de_model_begin, NUM_GROUPS);
-    install_language(&g_asrControl, &g_asrLangModel[1], lang[1], (unsigned char *)&cn_model_begin, NUM_GROUPS);
-#endif
+    for (int i = MAX_CONCURRENT_LANGUAGES - 1; i >= 0; i--)
+    {
+        install_language(&g_asrControl,
+                         &g_asrLangModel[i],
+                         lang[i],
+                         (unsigned char *)get_demo_model(lang[i], demoType),
+                         NUM_GROUPS);
+    }
 
-    install_language(&g_asrControl, &g_asrLangModel[0], lang[0], (unsigned char *)&en_model_begin, NUM_GROUPS);
+    for (int i = MAX_CONCURRENT_LANGUAGES - 1; i >= 0; i--)
+    {
+#if USE_DSMT_STATIC_POOLS
+        install_inference_engine(&g_asrControl,
+                                 &g_asrInfWW[i],
+                                 lang[i],
+                                 ASR_WW,
+                                 get_ww_strings(lang[i]),
+                                 g_memPoolWLang[i],
+                                 g_memPoolWLangSizes[i]);
+#else
+        install_inference_engine_dynamic(&g_asrControl,
+                                         &g_asrInfWW[i],
+                                         lang[i],
+                                         ASR_WW,
+                                         get_ww_strings(lang[i]));
+#endif /* USE_DSMT_STATIC_POOLS */
+    }
 
-#if MULTILINGUAL
-    install_inference_engine(&g_asrControl, &g_asrInfWW[3], lang[3], ASR_WW, get_ww_strings(lang[3]), &g_memPoolWLang4[0],
-                             WAKE_WORD_MEMPOOL_SIZE); // ww language4
-    install_inference_engine(&g_asrControl, &g_asrInfWW[2], lang[2], ASR_WW, get_ww_strings(lang[2]), &g_memPoolWLang3[0],
-                             WAKE_WORD_MEMPOOL_SIZE); // ww language3
-    install_inference_engine(&g_asrControl, &g_asrInfWW[1], lang[1], ASR_WW, get_ww_strings(lang[1]), &g_memPoolWLang2[0],
-                             CN_WAKE_WORD_MEMPOOL_SIZE); // ww language2
-#endif
-
-    install_inference_engine(&g_asrControl, &g_asrInfWW[0], lang[0], ASR_WW, get_ww_strings(lang[0]), &g_memPoolWLang1[0],
-                             WAKE_WORD_MEMPOOL_SIZE); // ww language1
-
+#if USE_DSMT_STATIC_POOLS
     // CMD inference engine will be reset with detected language after WW is detected
-    install_inference_engine(&g_asrControl, &g_asrInfCMD, ASR_ENGLISH, demoType, get_cmd_strings(ASR_ENGLISH, ASR_CMD_CHANGE_DEMO), &g_memPoolCmd[0],
-                             COMMAND_MEMPOOL_SIZE); // commands, setting up with defaults
+    install_inference_engine(&g_asrControl,
+                             &g_asrInfCMD,
+                             DEFAULT_ASR_LANGUAGE,
+                             demoType,
+                             get_cmd_strings(DEFAULT_ASR_LANGUAGE, demoType),
+                             &g_memPoolCmd[0],
+                             COMMAND_MEMPOOL_SIZE);
+#else
+    install_inference_engine_dynamic(&g_asrControl,
+                                     &g_asrInfCMD,
+                                     DEFAULT_ASR_LANGUAGE,
+                                     demoType,
+                                     get_cmd_strings(DEFAULT_ASR_LANGUAGE, demoType));
+#endif  /* USE_DSMT_STATIC_POOLS */
 
     // init
     init_WW_engine(&g_asrControl, demoType);
@@ -513,14 +662,21 @@ void local_voice_task(void *arg)
     }
 
     if (appAsrShellCommands.status != WRITE_SUCCESS ||
-        (false == validate_all_active_languages(appAsrShellCommands.activeLanguage, appAsrShellCommands.demo)) ||
+        (false == validate_all_active_languages(appAsrShellCommands.activeLanguage, appAsrShellCommands.demo))
+#if MULTILINGUAL
+        ||
         (appAsrShellCommands.activeLanguage != ASR_ALL_LANG))
+#else
+        )
+#endif
     {
-        appAsrShellCommands.demo         = BOOT_ASR_CMD_DEMO;
-        appAsrShellCommands.skipWW       = 1;
-        appAsrShellCommands.changeDemoFlow = 1;
+        appAsrShellCommands.demo           = BOOT_ASR_CMD_DEMO;
         appAsrShellCommands.followup     = ASR_FOLLOWUP_OFF;
+#if MULTILINGUAL
         appAsrShellCommands.activeLanguage = ASR_ALL_LANG;
+#else
+        appAsrShellCommands.activeLanguage = DEFAULT_ASR_LANGUAGE;
+#endif
         appAsrShellCommands.mute         = ASR_MUTE_OFF;
         appAsrShellCommands.ptt          = ASR_PTT_OFF;
         appAsrShellCommands.timeout      = TIMEOUT_TIME_IN_MS;
@@ -570,17 +726,18 @@ void local_voice_task(void *arg)
         /* Skip Wake Word phase and go directly to Voice Command phase.
          * As language will be selected last detected language.
          * As demo will be selected currently enabled demo. */
-        if (appAsrShellCommands.skipWW == 1)
+        if (oob_demo_control.skipWW == 1)
         {
             g_asrControl.sampleCount = 0;
             asrEvent                 = ASR_SESSION_STARTED;
+            print_asr_session(asrEvent);
 
             cmdString = get_cmd_strings(oob_demo_control.language, appAsrShellCommands.demo);
             set_CMD_engine(&g_asrControl, oob_demo_control.language, appAsrShellCommands.demo, cmdString);
 
             reset_WW_engine(&g_asrControl);
 
-            appAsrShellCommands.skipWW = 0;
+            oob_demo_control.skipWW = 0;
         }
 
         // continue listening to wake words in the selected languages. pInfWW is language specific.

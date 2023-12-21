@@ -71,6 +71,7 @@
     (CLOCK_GetFreq(kCLOCK_AudioPllClk) / (BOARD_PDM_SAI_CLOCK_SOURCE_DIVIDER + 1U) / \
      (BOARD_PDM_SAI_CLOCK_SOURCE_PRE_DIVIDER + 1U))
 
+#if ENABLE_AMPLIFIER
 /* Macro for AMP SAI */
 #define BOARD_AMP_SAI SAI3
 /* I2C instance and clock */
@@ -103,6 +104,7 @@
 #define BOARD_AMP_SAI_EDMA_RX_REQ kDmaRequestMuxSai3Rx
 #define BOARD_AMP_SAI_EDMA_TX_IRQ DMA2_DMA18_IRQn
 #define BOARD_AMP_SAI_EDMA_RX_IRQ DMA3_DMA19_IRQn
+#endif /* ENABLE_AMPLIFIER */
 
 #define SAMPLE_RATE (kSAI_SampleRate48KHz)
 
@@ -378,28 +380,6 @@
 #define BOARD_INITGT202SHIELD_IRQ_NAME      "IRQ"              /*!< Identifier name */
 #define BOARD_INITGT202SHIELD_IRQ_DIRECTION kGPIO_DigitalInput /*!< Direction */
 
-/* @Brief Board accelerator sensor configuration */
-#define BOARD_ACCEL_I2C_BASEADDR LPI2C1
-/* Select USB1 PLL (480 MHz) as LPI2C's clock source */
-#define BOARD_ACCEL_I2C_CLOCK_SOURCE_SELECT (0U)
-/* Clock divider for LPI2C clock source */
-#define BOARD_ACCEL_I2C_CLOCK_SOURCE_DIVIDER (5U)
-#define BOARD_ACCEL_I2C_CLOCK_FREQ           (CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8 / (BOARD_ACCEL_I2C_CLOCK_SOURCE_DIVIDER + 1U))
-
-#define BOARD_CODEC_I2C_BASEADDR             LPI2C1
-#define BOARD_CODEC_I2C_INSTANCE             1U
-#define BOARD_CODEC_I2C_IRQN                 LPI2C1_IRQn
-#define BOARD_CODEC_I2C_CLOCK_SOURCE_SELECT  (0U)
-#define BOARD_CODEC_I2C_CLOCK_SOURCE_DIVIDER (5U)
-#define BOARD_CODEC_I2C_CLOCK_FREQ \
-    ((CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8) / (BOARD_CODEC_I2C_CLOCK_SOURCE_DIVIDER + 1U))
-
-/* @Brief Board CAMERA configuration */
-#define BOARD_CAMERA_I2C_BASEADDR             LPI2C1
-#define BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER (5U)
-#define BOARD_CAMERA_I2C_CLOCK_SOURCE_SELECT  (0U) /* Select USB1 PLL (480 MHz) as LPI2C's clock source */
-#define BOARD_CAMERA_I2C_CLOCK_FREQ \
-    (CLOCK_GetFreq(kCLOCK_Usb1PllClk) / 8 / (BOARD_CAMERA_I2C_CLOCK_SOURCE_DIVIDER + 1U))
 /* @Brief Board Bluetooth HCI UART configuration */
 #define BOARD_BT_UART_BASEADDR    LPUART1
 #define BOARD_BT_UART_CLK_FREQ    BOARD_DebugConsoleSrcFreq()
@@ -476,30 +456,14 @@ status_t BOARD_LPI2C_ReceiveSCCB(LPI2C_Type *base,
                                  uint8_t subaddressSize,
                                  uint8_t *rxBuff,
                                  uint8_t rxBuffSize);
-void BOARD_Accel_I2C_Init(void);
-status_t BOARD_Accel_I2C_Send(uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint32_t txBuff);
-status_t BOARD_Accel_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subaddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
-void BOARD_Codec_I2C_Init(void);
-status_t BOARD_Codec_I2C_Send(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize);
-status_t BOARD_Codec_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
-void BOARD_Camera_I2C_Init(void);
-status_t BOARD_Camera_I2C_Send(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize);
-status_t BOARD_Camera_I2C_Receive(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
 
-status_t BOARD_Camera_I2C_SendSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, const uint8_t *txBuff, uint8_t txBuffSize);
-status_t BOARD_Camera_I2C_ReceiveSCCB(
-    uint8_t deviceAddress, uint32_t subAddress, uint8_t subAddressSize, uint8_t *rxBuff, uint8_t rxBuffSize);
 #endif /* SDK_I2C_BASED_COMPONENT_USED */
 
+#if ENABLE_AMPLIFIER
 #if defined(SDK_SAI_BASED_COMPONENT_USED) && SDK_SAI_BASED_COMPONENT_USED
 void BOARD_SAI_Init(sai_init_handle_t saiInitHandle);
 #endif
+#endif /* ENABLE_AMPLIFIER */
 
 #if defined(__cplusplus)
 }

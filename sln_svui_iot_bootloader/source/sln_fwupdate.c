@@ -1,7 +1,7 @@
 /*
- * Copyright 2019-2021 NXP.
- * This software is owned or controlled by NXP and may only be used strictly in accordance with the
- * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
+ * Copyright 2019-2021, 2023 NXP.
+ * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance
+ * with the license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
  * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
  * applicable license terms, then you may not retain, install, activate or otherwise use the software.
@@ -67,7 +67,7 @@ bool FWUpdate_CheckForUpdate(void)
     {
         /* Clear the flag for the method used for update as the update has finished */
         status = FICA_set_comm_flag(FICA_COMM_FWUPDATE_METHOD_BIT);
-        if (SLN_FLASH_NO_ERROR == status)
+        if (SLN_FLASH_NO_ERROR != status)
         {
             configPRINTF(("Failed to reset the method flag\r\n"));
         }

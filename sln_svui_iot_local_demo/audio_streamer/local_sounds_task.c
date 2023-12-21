@@ -75,23 +75,28 @@ status_t LOCAL_SOUNDS_PlayAudioFile(char *audioFileName, int32_t volume)
     {
         if ((audioFileName != NULL) && (!SLN_STREAMER_IsPlaying(&s_streamerHandle)))
         {
-            SLN_STREAMER_SetLocalSound(&s_streamerHandle, audioFileName);
-            if (!SLN_STREAMER_IsPlaying(&s_streamerHandle))
+            status = SLN_STREAMER_SetLocalSound(&s_streamerHandle, audioFileName);
+            if (kStatus_Success == status)
             {
-                SLN_STREAMER_Start(&s_streamerHandle);
-                SLN_STREAMER_SetVolume(volume);
+                if (!SLN_STREAMER_IsPlaying(&s_streamerHandle))
+                {
+                    SLN_STREAMER_Start(&s_streamerHandle);
+                    SLN_STREAMER_SetVolume(volume);
+                }
+                else
+                {
+                    configPRINTF(("[WARNING] Streamer is playing another audio.\r\n"));
+                    status = kStatus_Fail;
+                }
             }
             else
             {
-                configPRINTF(("[WARNING] Streamer is playing another audio.\r\n"));
-
-                status = kStatus_Fail;
+                configPRINTF(("[WARNING] Failed to set local sound for playback.\r\n"));
             }
         }
         else
         {
             configPRINTF(("[ERROR] Offline audio pointer is NULL.\r\n"));
-
             status = kStatus_Fail;
         }
     }

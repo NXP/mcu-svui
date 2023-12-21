@@ -1,58 +1,56 @@
-Release Name: Smart Voice User Interface (SVUI)
-Release Version: 1.0.0
-Package Version: sln_svui_iot_R1_RC8
-Outgoing License: LA_OPT_NXP_Software_License v47 July 2023 - Additional Distribution Use, Section 2.3 applies
+Package: Smart Voice User Interface (SVUI)
+Version: sln_svui_iot_R2_RC5
+Outgoing License: LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
 License file: LICENSE.txt
 Type of content: source code
-Description: NXP’s product with a part number of MIMXRT1062VCDP or NXP’s product included in the NXP evaluation kit with a part number of SLN-SVUI-IOT
-Release location: github.com/nxp-mcuxpresso/mcu-svui
+Description and comments: NXP’s product with a part number of MIMXRT1062VCDP or NXP’s product included in the NXP evaluation kit with a part number of SLN-SVUI-IOT
+Release location: github.com/NXP/mcu-svui
 Origin: NXP (proprietary)
                        
 
 cmsis                      Name: CMSIS                                       
-                           Version: 5.6.0                                    
+                           Version: 5.8.0                                    
                            Outgoing License: Apache License 2.0              
                            License File: CMSIS/LICENSE.txt                   
                            Format: source code                               
-                           Description: Vendor-independent hardware          
+                           Description and comments: Vendor-independent hardware          
                            abstraction layer for microcontrollers that are   
                            based on Arm® Cortex® processors, distributed by  
-                           ARM. cores                                                                      
-                           Origin: ARM (Apache-2.0) -                        
-                           https://github.com/ARM-software/CMSIS_5/releases/t
-                           ag/5.6.0                                          
-
+                           ARM. cores
+                           Release Location: https://github.com/ARM-software/CMSIS_5/releases/tag/5.8.0                                                                       
+                           Origin: ARM (Apache-2.0)                         
+                                                                     
 
 SDK_Components             Name: SDK components and board peripheral drivers 
                            Version: NA                                       
                            Outgoing License: BSD-3-Clause                    
                            License File: COPYING-BSD-3                       
                            Format: source code                               
-                           Description: SDK components and board peripheral  
+                           Description and comments: SDK components and board peripheral  
                            drivers, for example, flash and codec drivers.                                 
                            Origin: NXP (BSD-3-Clause) 
                        
                
 usb                        Name: USB                                         
-                           Version: 2.6.0                                    
+                           Version: 2.8.2                                    
                            Outgoing License: BSD-3-Clause                    
                            License File: COPYING-BSD-3                       
                            Format: source code                               
-                           Description: NXP USB stack. This is a version of  
+                           Description and comments: NXP USB stack. This is a version of  
                            the USB stack that has been integrated with the   
                            MCUXpresso SDK.                                                           
                            Origin: NXP (BSD-3-Clause)    
                     
 
 freertos                   Name: FreeRTOS                                    
-                           Version: 202002.00.0                              
+                           Version: 202107.00                              
                            Outgoing License: MIT                             
-                           License File: rtos/freertos/LICENSE               
+                           License File: freertos/LICENSE               
                            Format: source code                               
-                           Description: IoT operating system for             
+                           Description and comments: IoT operating system for             
                            microcontrollers                                                           
+                           Release Location: https://aws.amazon.com/freertos/
                            Origin: Real Time Engineers, Ltd. (MIT)           
-                           Url: https://aws.amazon.com/freertos/ 
             
                                             
 sdmmc                      Name: SD MMC SDIO Card middleware                 
@@ -60,54 +58,50 @@ sdmmc                      Name: SD MMC SDIO Card middleware
                            Outgoing License: BSC-3-Clause                    
                            License File: COPYING-BSD-3                       
                            Format: source code                               
-                           Description: A software component support SD card,
+                           Description and comments: A software component support SD card,
                            eMMC card, SDIO card.                                                     
                            Origin: NXP (BSD-3-Clause)                        
    
 
 mbedtls                    Name: Mbed TLS                                    
-                           Version: 2.16.6                                   
+                           Version: 2.28.0                                   
                            Outgoing License: Apache-2.0                      
-                           License File: middleware/mbedtls/apache-2.0.txt   
+                           License File: mbedtls/LICENSE   
                            Format: source code                               
-                           Description: Cryptographic and SSL/TLS Library                  
-                           Origin: ARM(Apache-2.0) -                         
-                           https://github.com/ARMmbed/mbedtls/releases/tag/mb
-                           edtls-2.16.6                                      
+                           Description and comments: Cryptographic and SSL/TLS Library                  
+                           Release Location: https://github.com/ARMmbed/mbedtls/releases/tag/mbedtls-2.28.0
+                           Origin: ARM(Apache-2.0)                         
+                                                                 
                  
-
 CJSON                      Name: CJSON                                       
-                           Version: 1.7.4                                    
+                           Version: 1.7.7                                    
                            Outgoing License: MIT                             
-                           License File: middleware/cjson/LICENSE            
+                           License File: cjson/LICENSE            
                            Format: source code                               
-                           Description: CJSON - Ultralightweight JSON parser 
+                           Description and comments: CJSON - Ultralightweight JSON parser 
                            in ANSI C                                                               
+                           Release Location: https://github.com/DaveGamble/cJSON/releases/tag/v1.7.7
                            Origin: Dave Gamble                               
-                           Url:                                              
-                           https://github.com/DaveGamble/cJSON/releases/tag/v
-                           1.7.4
 
 
 LittleFS                   Name: LittleFS                                    
-                           Version: 2.2.1                                    
+                           Version: 2.4.1                                    
                            Outgoing License: BSD-3-Clause                    
                            License File: littlefs/LICENSE.md      
                            Format: source code                               
-                           Description: LittleFS - A little fail-safe        
+                           Description and comments: LittleFS - A little fail-safe        
                            filesystem designed for microcontrollers                              
-                           Origin: Little FS (Christopher Haster)                                           
-                           Url: https://github.com/littlefs-project/littlefs                                                                
+                           Release Location: https://github.com/littlefs-project/littlefs
+                           Origin: Little FS (Christopher Haster)                                                                                                          
                                      
 
 sln_asr                    Name: Solutions ASR                               
                            Version: 1.0.0                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
-                           granted - License in Section 2.3 applies
+                           LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
                            License File: LICENSE.txt     
                            Format: Binary                                    
-                           Description: Automatic Speech Recognition for i.MX
+                           Description and comments: Automatic Speech Recognition for i.MX
                            RT based IoT Solutions                              
                            Origin: NXP   
                                                                         
@@ -115,22 +109,20 @@ sln_asr                    Name: Solutions ASR
 sln_iot_common_platform    Name: IoT Solutions Common Platform               
                            Version: 1.0.1                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
-                           granted - License in Section 2.3 applies
+                           LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
                            License File: LICENSE.txt       
                            Format: Source                                    
-                           Description: Common code for IoT Solutions                 
+                           Description and comments: Common code for IoT Solutions                 
                            Origin: NXP
 
 
 sln_dsp_toolbox            Name: Solutions Audio DSP Toolbox                 
                            Version: 1.0.0                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
-                           granted - License in Section 2.3 applies
+                           LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
                            License File: LICENSE.txt     
                            Format: Binary                                    
-                           Description: Audio DSP Library for i.MX RT based  
+                           Description and comments: Audio DSP Library for i.MX RT based  
                            IoT Solutions                                     
                            Origin: NXP                                          
                              
@@ -138,22 +130,20 @@ sln_dsp_toolbox            Name: Solutions Audio DSP Toolbox
 VoiceSeekerLight           Name: Voice Seeker                                
                            Version: 0.5.2                                    
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
-                           granted - License in Section 2.3 applies
+                           LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
                            License File: LICENSE.txt  
                            Format: Binary and source code                    
-                           Description: Voice Seeker library and wrapper     
+                           Description and comments: Voice Seeker library and wrapper     
                            source code.                                                       
                            Origin: NXP
 
 
-VIT_CM7_v04_08_00_EAR      Name: VIT CM7                                
-                           Version: 4.8.0.                                   
+VIT_CM7_v04_08_01          Name: VIT CM7                                
+                           Version: 4.8.1.                                   
                            Outgoing License: Proprietary. See
-                           LA_OPT_NXP_Software_License v47 July 2023 - Additional distribution license 
-                           granted - License in Section 2.3 applies
+                           LA_OPT_NXP_Software_License v53 December 2023 - Additional Distribution Use, Section 2.3 applies
                            License File: LICENSE.txt  
                            Format: Binary and source code                    
-                           Description: VIT library and wrapper     
+                           Description and comments: VIT library and wrapper     
                            source code.                                                       
                            Origin: NXP                    

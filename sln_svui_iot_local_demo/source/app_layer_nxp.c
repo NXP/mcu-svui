@@ -9,8 +9,10 @@
 
 #if ENABLE_NXP_OOBE
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #include "stdint.h"
-#include "audio_samples.h"
 #include "fsl_common.h"
 #include "FreeRTOSConfig.h"
 #include "sln_amplifier.h"
@@ -32,6 +34,7 @@
 
 extern app_asr_shell_commands_t appAsrShellCommands;
 extern oob_demo_control_t oob_demo_control;
+extern TaskHandle_t appTaskHandle;
 
 /*******************************************************************************
  * Prototypes
@@ -125,9 +128,8 @@ static void APP_LAYER_ProcessChangeDemoCommand(void)
 #if ENABLE_DSMT_ASR
     appAsrShellCommands.demo   = ASR_CMD_CHANGE_DEMO;
 #endif /* ENABLE_DSMT_ASR */
-    appAsrShellCommands.status = WRITE_SUCCESS;
-    appAsrShellCommands.skipWW = 1;
-    appAsrShellCommands.changeDemoFlow = 1;
+    oob_demo_control.skipWW = 1;
+    oob_demo_control.changeDemoFlow = 1;
 
     APP_LAYER_LedChangeDemoCommand();
 }
@@ -135,9 +137,8 @@ static void APP_LAYER_ProcessChangeDemoCommand(void)
 #if ENABLE_VIT_ASR
 static void APP_LAYER_ProcessChangeLanguageCommand(void)
 {
-    appAsrShellCommands.status = WRITE_SUCCESS;
-    appAsrShellCommands.skipWW = 1;
-    appAsrShellCommands.changeLanguageFlow = 1;
+    oob_demo_control.skipWW = 1;
+    oob_demo_control.changeLanguageFlow = 1;
 
     APP_LAYER_LedChangeLanguageCommand();
 }
@@ -165,8 +166,8 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kElevator_ChangeDemo:
                 case kElevator_ChangeLanguage:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow ||
-                        appAsrShellCommands.changeDemoFlow)
+                    if (oob_demo_control.changeLanguageFlow ||
+                            oob_demo_control.changeDemoFlow)
                     {
                         filterDetection = true;
                     }
@@ -176,7 +177,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kElevator_WashingMachine:
                 case kElevator_SmartHome:
                 {
-                    if (appAsrShellCommands.changeDemoFlow == 0)
+                    if (oob_demo_control.changeDemoFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -187,7 +188,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kElevator_German:
                 case kElevator_Chinese:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow == 0)
+                    if (oob_demo_control.changeLanguageFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -216,8 +217,8 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kWashingMachine_ChangeDemo:
                 case kWashingMachine_ChangeLanguage:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow ||
-                        appAsrShellCommands.changeDemoFlow)
+                    if (oob_demo_control.changeLanguageFlow ||
+                        oob_demo_control.changeDemoFlow)
                     {
                         filterDetection = true;
                     }
@@ -227,7 +228,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kWashingMachine_WashingMachine:
                 case kWashingMachine_SmartHome:
                 {
-                    if (appAsrShellCommands.changeDemoFlow == 0)
+                    if (oob_demo_control.changeDemoFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -238,7 +239,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kWashingMachine_German:
                 case kWashingMachine_Chinese:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow == 0)
+                    if (oob_demo_control.changeLanguageFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -269,8 +270,8 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kSmartHome_ChangeDemo:
                 case kSmartHome_ChangeLanguage:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow ||
-                        appAsrShellCommands.changeDemoFlow)
+                    if (oob_demo_control.changeLanguageFlow ||
+                        oob_demo_control.changeDemoFlow)
                     {
                         filterDetection = true;
                     }
@@ -280,7 +281,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kSmartHome_WashingMachine:
                 case kSmartHome_SmartHome:
                 {
-                    if (appAsrShellCommands.changeDemoFlow == 0)
+                    if (oob_demo_control.changeDemoFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -291,7 +292,7 @@ bool APP_LAYER_FilterVitDetection(unsigned short commandId, asr_inference_t acti
                 case kSmartHome_German:
                 case kSmartHome_Chinese:
                 {
-                    if (appAsrShellCommands.changeLanguageFlow == 0)
+                    if (oob_demo_control.changeLanguageFlow == 0)
                     {
                         filterDetection = true;
                     }
@@ -321,7 +322,7 @@ static status_t APP_LAYER_SwitchToNewDemo(asr_inference_t newDemo)
 {
     status_t status = kStatus_Success;
 
-    if (appAsrShellCommands.changeDemoFlow)
+    if (oob_demo_control.changeDemoFlow)
     {
         switch (newDemo)
         {
@@ -351,7 +352,7 @@ static status_t APP_LAYER_SwitchToNewDemo(asr_inference_t newDemo)
         appAsrShellCommands.demo   = newDemo;
         appAsrShellCommands.status = WRITE_READY;
         appAsrShellCommands.asrCfg = ASR_CFG_CMD_INFERENCE_ENGINE_CHANGED;
-        appAsrShellCommands.changeDemoFlow = 0;
+        oob_demo_control.changeDemoFlow = 0;
 
         APP_LAYER_LedChangeDemoAction();
     }
@@ -368,7 +369,7 @@ static status_t APP_LAYER_SwitchToNewLanguage(asr_language_t newLanguage)
 {
     status_t status = kStatus_Success;
 
-    if (appAsrShellCommands.changeLanguageFlow)
+    if (oob_demo_control.changeLanguageFlow)
     {
         switch (newLanguage)
         {
@@ -403,7 +404,7 @@ static status_t APP_LAYER_SwitchToNewLanguage(asr_language_t newLanguage)
         appAsrShellCommands.activeLanguage   = newLanguage;
         appAsrShellCommands.status = WRITE_READY;
         appAsrShellCommands.asrCfg = ASR_CFG_DEMO_LANGUAGE_CHANGED;
-        appAsrShellCommands.changeLanguageFlow = 0;
+        oob_demo_control.changeLanguageFlow = 0;
 
         oob_demo_control.language   = newLanguage;
 
@@ -673,8 +674,8 @@ status_t APP_LAYER_ProcessVoiceCommand(oob_demo_control_t *commandConfig)
 
     if (status == kStatus_Success)
     {
-        if (!(appAsrShellCommands.changeDemoFlow     ||
-              appAsrShellCommands.changeLanguageFlow ||
+        if (!(oob_demo_control.changeDemoFlow     ||
+              oob_demo_control.changeLanguageFlow ||
               appAsrShellCommands.asrCfg == ASR_CFG_CMD_INFERENCE_ENGINE_CHANGED ||
               appAsrShellCommands.asrCfg == ASR_CFG_DEMO_LANGUAGE_CHANGED))
         {
@@ -707,17 +708,17 @@ status_t APP_LAYER_ProcessTimeout(oob_demo_control_t *commandConfig)
             }
 
             case ASR_CMD_ELEVATOR:
-            {
-                break;
-            }
-
             case ASR_CMD_WASHING_MACHINE:
-            {
-                break;
-            }
-
             case ASR_CMD_SMART_HOME:
             {
+                if (oob_demo_control.changeDemoFlow ||
+                    oob_demo_control.changeLanguageFlow)
+                {
+                    /* appTask plays the demo prompt when notified that the model changed
+                     * reuse that behavior here to play the demo prompt after a timeout
+                     * in this way the user will be reminded the demo and the language that are active */
+                    xTaskNotify(appTaskHandle, kAsrModelChanged, eSetBits);
+                }
                 break;
             }
 
@@ -735,14 +736,19 @@ status_t APP_LAYER_ProcessTimeout(oob_demo_control_t *commandConfig)
         status = kStatus_InvalidArgument;
     }
 
-    if (appAsrShellCommands.changeLanguageFlow)
+    if (oob_demo_control.changeLanguageFlow)
     {
-        appAsrShellCommands.changeLanguageFlow = 0;
+        oob_demo_control.changeLanguageFlow = 0;
     }
 
-    if (appAsrShellCommands.changeDemoFlow)
+    if (oob_demo_control.changeDemoFlow)
     {
-        appAsrShellCommands.changeDemoFlow = 0;
+        oob_demo_control.changeDemoFlow = 0;
+    }
+
+    if (oob_demo_control.skipWW)
+    {
+        oob_demo_control.skipWW = 0;
     }
 
     if (status == kStatus_Success)
@@ -764,8 +770,8 @@ void APP_LAYER_SwitchToNextDemo(void)
 {
     if (!(appAsrShellCommands.asrCfg & ASR_CFG_CMD_INFERENCE_ENGINE_CHANGED) &&
         !(appAsrShellCommands.asrCfg & ASR_CFG_DEMO_LANGUAGE_CHANGED) &&
-        !appAsrShellCommands.changeDemoFlow &&
-        !appAsrShellCommands.changeLanguageFlow)
+        !oob_demo_control.changeDemoFlow &&
+        !oob_demo_control.changeLanguageFlow)
     {
         switch (appAsrShellCommands.demo)
         {
@@ -800,15 +806,24 @@ void APP_LAYER_SwitchToNextDemo(void)
 
 void APP_LAYER_HandleFirstBoardBoot(void)
 {
-#if ENABLE_VIT_ASR
-    if (appAsrShellCommands.demo == BOOT_ASR_CMD_DEMO)
+    if ((appAsrShellCommands.demo == BOOT_ASR_CMD_DEMO) &&
+        (BOOT_ASR_CMD_DEMO != DEFAULT_ASR_CMD_DEMO))
     {
-        appAsrShellCommands.demo = DEFAULT_ASR_CMD_DEMO;
+#if ENABLE_VIT_ASR
 #if ENABLE_STREAMER
         APP_LAYER_PlayAudioFromFileSystem(AUDIO_DEMO_NAME_TEST_EN);
 #endif /* ENABLE_STREAMER */
-    }
+        appAsrShellCommands.demo = DEFAULT_ASR_CMD_DEMO;
+        appAsrShellCommands.status = WRITE_READY;
+
+        /* notify app task to allow it to save
+         * the demo type in flash */
+        xTaskNotify(appTaskHandle, kDefault, eSetBits);
 #endif /* ENABLE_VIT_ASR */
+
+        oob_demo_control.skipWW         = 1;
+        oob_demo_control.changeDemoFlow = 1;
+    }
 }
 
 #endif /* ENABLE_NXP_OOBE */

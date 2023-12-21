@@ -20,6 +20,7 @@
 #include "sln_flash_fs_ops.h"
 #include "sln_rgb_led_driver.h"
 #include "sln_amplifier.h"
+#include "sln_mic_config.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -45,8 +46,8 @@
  ******************************************************************************/
 
 /* VIT memory pools sizes */
-#define FAST_MEMORY_SIZE_BYTES  (195000)
-#define SLOW_MEMORY_SIZE_BYTES  (225000)
+#define FAST_MEMORY_SIZE_BYTES  (191000)
+#define SLOW_MEMORY_SIZE_BYTES  (151000)
 #define MODEL_MEMORY_SIZE_BYTES (450000)
 
 /*******************************************************************************
@@ -117,6 +118,22 @@ typedef enum _cmd_state
 /*******************************************************************************
  * Code
  ******************************************************************************/
+
+void print_asr_version(void)
+{
+    VIT_LibInfo_st info;
+    VIT_ReturnStatus_en status;
+    status = VIT_GetLibInfo(&info);
+
+    if (status != VIT_SUCCESS)
+    {
+        configPRINTF(("VIT_GetLibInfo error : %d\r\n", status));
+    }
+    else
+    {
+        configPRINTF(("ASR engine: VIT version 0x%04x\r\n", info.VIT_LIB_Release));
+    }
+}
 
 static void asr_set_state(asr_session_t state)
 {
@@ -207,9 +224,9 @@ static VIT_ReturnStatus_en VIT_Init(void)
 
     /* In case no demo found, boot in the default one */
     if (asrModelAddr == NULL)
-	{
-    	asrModelAddr = get_demo_model(appAsrShellCommands.activeLanguage, DEFAULT_ASR_CMD_DEMO);
-	}
+    {
+        asrModelAddr = get_demo_model(appAsrShellCommands.activeLanguage, DEFAULT_ASR_CMD_DEMO);
+    }
 
     if (asrModelAddr == NULL)
     {
@@ -361,8 +378,6 @@ void local_voice_task(void *arg)
         (false == validate_all_active_languages(appAsrShellCommands.activeLanguage, appAsrShellCommands.demo)))
     {
         appAsrShellCommands.demo           = BOOT_ASR_CMD_DEMO;
-        appAsrShellCommands.skipWW         = 1;
-        appAsrShellCommands.changeDemoFlow = 1;
         appAsrShellCommands.followup       = ASR_FOLLOWUP_OFF;
         appAsrShellCommands.activeLanguage = DEFAULT_ASR_LANGUAGE;
         appAsrShellCommands.mute           = ASR_MUTE_OFF;
@@ -407,11 +422,11 @@ void local_voice_task(void *arg)
         /* Skip Wake Word phase and go directly to Voice Command phase.
          * As language will be selected last detected language.
          * As demo will be selected currently enabled demo. */
-        if (appAsrShellCommands.skipWW == 1)
+        if (oob_demo_control.skipWW == 1)
         {
             g_sampleCount = 0;
             asr_set_state(ASR_SESSION_VOICE_COMMAND);
-            appAsrShellCommands.skipWW = 0;
+            oob_demo_control.skipWW = 0;
         }
 
         VIT_Status = VIT_Process(VITHandle, pi16Sample, &VIT_DetectionResults);
@@ -458,8 +473,10 @@ void local_voice_task(void *arg)
                 }
                 else if (s_VoiceCommand.Id > 0)
                 {
+                    uint16_t action = get_action_from_keyword(appAsrShellCommands.activeLanguage, appAsrShellCommands.demo, s_VoiceCommand.Id - 1);
+
                     /* Filter command here ? */
-                    if (APP_LAYER_FilterVitDetection(s_VoiceCommand.Id - 1, appAsrShellCommands.demo) == false)
+                    if (APP_LAYER_FilterVitDetection(action, appAsrShellCommands.demo) == false)
                     {
                         configPRINTF(("[ASR] Command: %s(%d)\r\n", (s_VoiceCommand.pName == PL_NULL) ? "UNDEF" : s_VoiceCommand.pName, s_VoiceCommand.Id));
 

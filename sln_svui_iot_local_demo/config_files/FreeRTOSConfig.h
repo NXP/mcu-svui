@@ -75,7 +75,14 @@
 /* Memory allocation related definitions. */
 #define configSUPPORT_STATIC_ALLOCATION         1
 #define configSUPPORT_DYNAMIC_ALLOCATION        1
+
+#if ENABLE_DSMT_ASR && !USE_DSMT_STATIC_POOLS
+/* The value below can be modified as needed. */
+#define configTOTAL_HEAP_SIZE                   ((size_t) (300 * 1024))
+#else
 #define configTOTAL_HEAP_SIZE                   ((size_t) (100 * 1024))
+#endif
+
 #define configAPPLICATION_ALLOCATED_HEAP        0
 
 #define configCHECK_FOR_STACK_OVERFLOW          2

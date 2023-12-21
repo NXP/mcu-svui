@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 NXP.
+ * Copyright 2022-2023 NXP.
  * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance with the
  * license terms that accompany it. By expressly accepting such terms or by downloading, installing,
  * activating and/or otherwise using the software, you are agreeing that you have read, and that you
@@ -18,6 +18,7 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
+#if ENABLE_AMPLIFIER
 #define aec_align_sound_task_NAME              "AecAlignSound"
 #define aec_align_sound_task_PRIORITY          4
 #define aec_align_sound_task_STACK             512
@@ -26,6 +27,7 @@
 
 #define AEC_ALIGN_DELAY_STARTUP_MS             1000
 #define AEC_ALIGN_DELAY_BETWEEN_SOUND_PLAYS_MS 5000
+#endif /* ENABLE_AMPLIFIER */
 
 /*******************************************************************************
  * API
@@ -48,10 +50,11 @@ usb_status_t AUDIO_DUMP_USB_DeviceCdcVcomCallback(class_handle_t handle, uint32_
  *
  * @param micStream            The mics buffer
  * @param ampStream            The amp buffer
- * @param cloudStream          The afe processed buffer
+ * @param cleanStream          The afe processed buffer
  */
-void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void *cloudStream);
+void AUDIO_DUMP_ForwardDataOverUsb(int16_t *micStream, int16_t *ampStream, void *cleanStream);
 
+#if ENABLE_AMPLIFIER
 /*!
  * @brief Task responsible for playing the alignment sound
  */
@@ -66,5 +69,6 @@ void AUDIO_DUMP_AecAlignSoundStart(void);
  * @brief Stop playing the alignment sound
  */
 void AUDIO_DUMP_AecAlignSoundStop(void);
+#endif /* ENABLE_AMPLIFIER */
 #endif /* _AUDIO_DUMP_H_ */
 #endif /* ENABLE_AUDIO_DUMP */

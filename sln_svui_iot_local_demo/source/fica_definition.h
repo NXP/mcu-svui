@@ -153,6 +153,7 @@ typedef enum _fica_img_type
     FICA_IMG_TYPE_BOOTLOADER, /*!< Bootloader Image */
     FICA_IMG_TYPE_APP_A,      /*!< Application A Image */
     FICA_IMG_TYPE_APP_B,      /*!< Application B Image */
+    FICA_IMG_TYPE_FS,         /*!< File System Image */
     FICA_NUM_IMG_TYPES,       /*!< Total Number of Images Defined in this Version */
 } fica_img_type_t;
 

@@ -24,6 +24,16 @@
 // Shell Commands Related
 #define ASR_SHELL_COMMANDS_FILE_NAME "asr_shell_commands.dat"
 
+/*!
+ * @brief Print current ASR engine and its version
+ */
+void print_asr_version(void);
+
+/*!
+ * @brief Task responsible for ASR initialization and ASR processing.
+ *
+ * The ASR engine is specified in app.h
+ */
 void local_voice_task(void *arg);
 
 #endif /* SLN_LOCAL_VOICE_COMMON_H_ */

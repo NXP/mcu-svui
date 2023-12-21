@@ -1,0 +1,167 @@
+                CST 3.1.0 Release Notes
+
+
+PROJECT(S):             CST
+DATE:                   September, 2018
+
+           COPYRIGHT © 2017-2018 NXP
+           ALL RIGHTS RESERVED. PRESENCE OF COPYRIGHT
+           NOTICE IS NOT AN ACKNOWLEDGEMENT OF PUBLICATION.
+
+1 READ ME FIRST
+    This is the NXP Code Signing Tool (CST) for the High
+    Assurance Boot (HAB) library and the Advanced High Assurance
+    Boot (AHAB) subsystem. The CST provides software code
+    signing support designed for use with NXP processors that
+    integrate the HAB library in the internal boot ROM or the
+    AHAB subsystem. This release provides the features required
+    for the code signing for SoC supporting HAB version 3,
+    HAB version 4 and AHAB.
+
+1.1 REQUIREMENTS
+    This release supports Linux and Windows hosts
+    For Linux, the CST is known to work on Ubuntu 14.04 and later.
+    For Windows, the CST is known to work on Windows 7 and later
+
+    Most Linux distributions should work but they have not been fully
+    tested. If you run into library problems, see section 2.1 below
+    for instructions on how to relink CST.
+
+1.2 PROBLEM REPORTING INSTRUCTIONS
+    Problems with this release may be reported to your local NXP
+    representative or at community.nxp.com.
+
+
+2 NEW FEATURES & Fixes
+    The following is included in this release:
+
+2.1 Encrypted Boot support
+    This version of CST allows the user to relink the executable
+    to include support for generating encrypted boot images.
+
+    To relink on Ubuntu 14.04 machines, please first install binutils 2.26:
+        sudo apt-get install binutils-2.26
+        export PATH=/usr/lib/binutils-2.26/bin:${PATH}
+
+    To relink on 32 bit Linux machines:
+       This requires the GCC compiler and the OpenSSL header files and
+       library. For example on Ubuntu machines:
+       sudo apt-get install gcc libssl-dev
+
+       cd <CST install directory>/code/back_end/src
+       gcc -o cst -I ../hdr -L ../../../linux32/lib *.c \
+           -lfrontend -lcrypto
+       cp cst ../../../linux32
+
+    To relink on 64 bit Linux machines:
+       This requires the GCC compiler and the OpenSSL header files and
+       library. For example on Ubuntu machines:
+       sudo apt-get install gcc libssl-dev
+
+       cd <CST install directory/code/back_end/src
+       gcc -o cst -I ../hdr -L ../../../linux64/lib *.c -lfrontend -lcrypto
+       cp cst ../../../linux64
+
+    To relink on Windows machines:
+       This requires the MINGW compiler and OpenSSL header files and
+       library. The easiest way to get them is to install Cygwin
+
+       cd <CST install directory/code/back_end/src
+       i686-w64-mingw32-gcc -o cst.exe -I ../hdr -L ../../../mingw32/lib \
+         *.c -lfrontend -lcrypto -static -lgdi32 -lws2_32 -lz
+       cp cst.exe ../../../mingw32
+
+       If cst.exe crashes, please try to relink with the small C snippet
+       applink.c provided by OpenSSL (if applicable to your platform).
+       To do so, please add the compilation flag -DUSE_APPLINK.
+
+       i686-w64-mingw32-gcc -o cst.exe -I ../hdr -L ../../../mingw32/lib \
+         *.c -lfrontend -lcrypto -static -lgdi32 -lws2_32 -lz -DUSE_APPLINK
+
+        Please refer to https://www.openssl.org/docs/man1.1.0/crypto/OPENSSL_Applink.html
+        and https://www.openssl.org/docs/faq.html#PROG3
+
+    This was added in CST 2.3.0
+
+    Please note that there was an issue in 3.0.1 that prevented this
+    feature from working.
+
+2.2 64 bit native binaries
+    CST now includes both 32 and 64 bit native binaries. They are
+    located in the linux32 and linux64 directories, respectively.
+
+    This was added in CST 2.3.0
+
+2.3 Issue INIT RNG command
+    On closed i.MX devices with CAAM, HAB will initialize the RNG by
+    default. If the RNG trim fuses have not been set correctly, RNG
+    iniatialization will fail, causing the boot to fail.
+
+    To prevent HAB from initializing the RNG, you can add an UNLOCK
+    command to the CST input file.
+
+    This version of CST will add that command automatically if the CSF
+    includes "Engine = CAAM" in the header unless
+    explicitly told otherwise. The way to disable this behavior is to
+    add the following to the CST input file:
+        [Init]
+             Engine = CAAM
+             Features = RNG
+
+    This was added in CST 2.3.1, fixed in 2.3.2
+
+2.4 Changed CST input file handling
+    Previous versions of CST got the CSF input file on standard
+    input. This has changed. Now the input filename is supplied as a
+    command line argument.
+
+    Example:
+       cst --output csf.bin --input input.csf
+
+    This was added in CST 2.3.2
+
+2.5 Added unlock command for Manufacturing Protection
+    The new unlock command will cause HAB to keep the manufacturing
+    protection key in internal CAAM memory after boot.
+
+    This was added in CST 2.3.2
+
+2.6 Windows support
+    This version of CST adds support for Microsoft Windows.
+
+    This was added in CST 2.3.3
+
+2.7 Removed several commands
+    This version of CST removed support for the following commands:
+        Write Data
+        Clear Mask
+        Set Mask
+        Check All Clear
+        Check All Set
+        Check Any Clear
+        Check Any Set
+        Set MID
+
+    This was added in CST 2.3.3
+
+2.8 AHAB support
+    This version of CST adds support for AHAB.
+
+    This was added in CST 3.0.0
+
+2.9 ECDSA support for HAB4
+    This version of CST adds support for ECDSA for HAB4.
+    ECDSA support was added in HAB 4.5
+
+    This was added in CST 3.1.0
+
+3.0 OpenSSL 1.1.0
+    This version of CST adds support for OpenSSL 1.1.0.
+    Even if OpenSSL 1.0.2 is known to work with CST, OpenSSL 1.1.0
+    or later is recommended.
+
+    This was added in CST 3.1.0
+
+3 KNOWN ISSUES
+
+No known issues.

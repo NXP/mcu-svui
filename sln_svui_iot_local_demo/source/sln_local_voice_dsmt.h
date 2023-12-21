@@ -68,7 +68,6 @@ typedef struct _asr_control
     asr_result_t result;                       // results of the command processing
 } asr_control_t;
 
-
 #if defined(__cplusplus)
 }
 #endif

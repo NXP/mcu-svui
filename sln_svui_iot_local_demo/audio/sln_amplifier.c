@@ -7,6 +7,8 @@
  * applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
 
+#if ENABLE_AMPLIFIER
+
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -186,7 +188,10 @@ status_t SLN_AMP_Init(volatile uint8_t *extStreamerBuffsCnt)
     if (ret == kStatus_Success)
     {
         s_StreamerFreeBuffs = extStreamerBuffsCnt;
-        s_StreamerMaxBuffs  = *extStreamerBuffsCnt;
+        if (NULL != s_StreamerFreeBuffs)
+        {
+            s_StreamerMaxBuffs  = *extStreamerBuffsCnt;
+        }
 
         /* BOARD_SAI_Init triggers a Transfer, wait for its end. */
         s_AmplifierFreeBuffs = 0;
@@ -981,3 +986,4 @@ static void SLN_AMP_StartLoopbackTimer(void)
 }
 #endif /* USE_MQS */
 #endif /* !AMP_LOOPBACK_DISABLED */
+#endif /* ENABLE_AMPLIFIER */

@@ -15,6 +15,6 @@
         *ccidec.o(.bss.ccidec_packed_buf)
 </#if>
 
-<#if memory.name=="SRAM_DTC">
+<#if memory.name=="SRAM_OC_NON_CACHEABLE">
         *ccidec.o(.bss.*)
 </#if>

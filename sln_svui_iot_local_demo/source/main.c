@@ -1,18 +1,17 @@
 /*
  * Copyright 2019-2023 NXP.
- * NXP Confidential. This software is owned or controlled by NXP and may only be used strictly in accordance
- * with the license terms that accompany it. By expressly accepting such terms or by downloading, installing,
- * activating and/or otherwise using the software, you are agreeing that you have read, and that you
- * agree to comply with and are bound by, such license terms. If you do not agree to be bound by the
- * applicable license terms, then you may not retain, install, activate or otherwise use the software.
+ * NXP Confidential and Proprietary. This software is owned or controlled by NXP and may only be used strictly
+ * in accordance with the applicable license terms. By expressly accepting such terms or by downloading,
+ * installing, activating and/or otherwise using the software, you are agreeing that you have read, and
+ * that you agree to comply with and are bound by, such license terms. If you do not agree to be bound by
+ * the applicable license terms, then you may not retain, install, activate or otherwise use the software.
  */
-
-#include <time.h>
 
 /* Board includes */
 #include "board.h"
 #include "fsl_debug_console.h"
 #include "pin_mux.h"
+#include "clock_config.h"
 
 /* FreeRTOS kernel includes */
 #include "FreeRTOS.h"
@@ -32,6 +31,9 @@
 /* Application headers */
 #include "sln_local_voice_common.h"
 #include "switch.h"
+#include "local_sounds_task.h"
+#include "IndexCommands.h"
+#include "app_layer.h"
 
 /* Flash includes */
 #include "sln_flash.h"
@@ -40,7 +42,6 @@
 #include "sln_flash_files.h"
 
 /* Audio processing includes */
-#include "audio_samples.h"
 #include "audio_processing_task.h"
 #include "pdm_to_pcm_task.h"
 #include "sln_amplifier.h"
@@ -53,11 +54,6 @@
 #elif (MICS_TYPE == MICS_I2S)
 #include "sln_i2s_mic.h"
 #endif /* MICS_TYPE */
-
-#include "local_sounds_task.h"
-#include "IndexCommands.h"
-#include "app_layer.h"
-#include "clock_config.h"
 
 /*******************************************************************************
  * Definitions
@@ -75,11 +71,9 @@ TaskHandle_t appTaskHandle             = NULL;
 TaskHandle_t audioProcessingTaskHandle = NULL;
 TaskHandle_t micTaskHandle             = NULL;
 TaskHandle_t appInitDummyNullHandle    = NULL;
-#if ENABLE_AUDIO_DUMP
+#if ENABLE_AUDIO_DUMP && ENABLE_AMPLIFIER
 TaskHandle_t aecAlignSoundTaskHandle   = NULL;
-#endif /* ENABLE_AUDIO_DUMP */
-bool taskPlaying;
-uint8_t isRecording;
+#endif /* ENABLE_AUDIO_DUMP && ENABLE_AMPLIFIER */
 bool g_SW1Pressed                   = false;
 oob_demo_control_t oob_demo_control = {0};
 
@@ -88,7 +82,7 @@ extern app_asr_shell_commands_t appAsrShellCommands;
 /*******************************************************************************
  * Callbacks
  ******************************************************************************/
-void switch_callback(int32_t button_nr, int32_t state)
+static void switch_callback(int32_t button_nr, int32_t state)
 {
     if (button_nr == SWITCH_SW1)
     {
@@ -108,6 +102,22 @@ void switch_callback(int32_t button_nr, int32_t state)
         {
             APP_LAYER_SwitchToNextDemo();
         }
+    }
+}
+
+static void pre_sector_erase_callback(void)
+{
+    if (appAsrShellCommands.mute != ASR_MUTE_ON)
+    {
+        SLN_MIC_OFF();
+    }
+}
+
+static void post_sector_erase_callback(void)
+{
+    if (appAsrShellCommands.mute != ASR_MUTE_ON)
+    {
+        SLN_MIC_ON();
     }
 }
 
@@ -136,7 +146,10 @@ static status_t announce_demo(asr_inference_t demo, asr_language_t lang, uint32_
     status_t ret = kStatus_Success;
 
     char *prompt = get_demo_prompt(demo, lang);
-    ret = audio_play_clip(prompt, volume);
+    if (prompt)
+    {
+        ret = audio_play_clip(prompt, volume);
+    }
 
     return ret;
 }
@@ -152,13 +165,19 @@ void appTask(void *arg)
 
     sln_shell_set_app_init_task_handle(&appInitDummyNullHandle);
 
+#if ENABLE_AMPLIFIER
 #if ENABLE_STREAMER
+    /* InitStreamer will initialize the amplifier as well */
     ret = LOCAL_SOUNDS_InitStreamer();
     if (ret != kStatus_Success)
     {
-        PRINTF("LOCAL_SOUNDS_InitStreamer failed!\r\n");
+        configPRINTF(("LOCAL_SOUNDS_InitStreamer failed!\r\n"));
     }
+#else
+    /* No external buffers count when streamer is not used */
+    SLN_AMP_Init(NULL);
 #endif /* ENABLE_STREAMER */
+#endif /* ENABLE_AMPLIFIER */
 
     int16_t *micBuf = SLN_MIC_GET_PCM_BUFFER_POINTER();
     audio_processing_set_mic_input_buffer(micBuf);
@@ -171,7 +190,7 @@ void appTask(void *arg)
     if (xTaskCreate(audio_processing_task, "Audio_processing_task", 1536U, NULL, audio_processing_task_PRIORITY,
                     &audioProcessingTaskHandle) != pdPASS)
     {
-        PRINTF("Audio processing task creation failed!\r\n");
+        configPRINTF(("Audio processing task creation failed!\r\n"));
         RGB_LED_SetColor(LED_COLOR_RED);
         vTaskDelete(NULL);
     }
@@ -196,18 +215,18 @@ void appTask(void *arg)
     if (xTaskCreate(SLN_MIC_TASK_FUNCTION, SLN_MIC_TASK_NAME, SLN_MIC_TASK_STACK_SIZE, NULL, SLN_MIC_TASK_PRIORITY, &micTaskHandle) !=
         pdPASS)
     {
-        PRINTF("PDM to PCM processing task creation failed!\r\n");
+        configPRINTF(("PDM to PCM processing task creation failed!\r\n"));
         RGB_LED_SetColor(LED_COLOR_RED);
         vTaskDelete(NULL);
     }
 
-#if ENABLE_AUDIO_DUMP
+#if ENABLE_AUDIO_DUMP && ENABLE_AMPLIFIER
     if (xTaskCreate(AUDIO_DUMP_AecAlignSoundTask, aec_align_sound_task_NAME, aec_align_sound_task_STACK, NULL, aec_align_sound_task_PRIORITY,
                         &aecAlignSoundTaskHandle) != pdPASS)
     {
-        PRINTF("xTaskCreate AUDIO_DUMP_AecAlignSoundTask failed!\r\n");
+        configPRINTF(("xTaskCreate AUDIO_DUMP_AecAlignSoundTask failed!\r\n"));
     }
-#endif /* ENABLE_AUDIO_DUMP */
+#endif /* ENABLE_AUDIO_DUMP && ENABLE_AMPLIFIER */
 
     while (!SLN_MIC_GET_STATE())
     {
@@ -216,11 +235,12 @@ void appTask(void *arg)
 
     RGB_LED_SetColor(LED_COLOR_OFF);
 
+#if ENABLE_AMPLIFIER
     SLN_AMP_SetVolume(appAsrShellCommands.volume);
-
 #if ENABLE_STREAMER
     announce_demo(appAsrShellCommands.demo, appAsrShellCommands.activeLanguage, appAsrShellCommands.volume);
 #endif /* ENABLE_STREAMER */
+#endif /* ENABLE_AMPLIFIER */
 
     APP_LAYER_HandleFirstBoardBoot();
 
@@ -233,9 +253,8 @@ void appTask(void *arg)
     }
     else if (appAsrShellCommands.ptt == ASR_PTT_ON)
     {
-        configPRINTF(
-            ("ASR Push-To-Talk mode is enabled.\r\n"
-             "Press SW3 to input a command.\r\n"));
+        configPRINTF(("ASR Push-To-Talk mode is enabled.\r\n"
+                      "Press SW3 to input a command.\r\n"));
         /* show the user that device will wake up only on SW3 press */
         RGB_LED_SetColor(LED_COLOR_CYAN);
     }
@@ -271,7 +290,9 @@ void appTask(void *arg)
             }
             case kVolumeUpdate:
             {
+#if ENABLE_AMPLIFIER
                 SLN_AMP_SetVolume(appAsrShellCommands.volume);
+#endif /* ENABLE_AMPLIFIER */
                 break;
             }
             case kWakeWordDetected:
@@ -316,15 +337,33 @@ void appTask(void *arg)
         if (appAsrShellCommands.status == WRITE_READY)
         {
             appAsrShellCommands.status = WRITE_SUCCESS;
-            statusFlash = sln_flash_fs_ops_save(ASR_SHELL_COMMANDS_FILE_NAME, (uint8_t *)&appAsrShellCommands,
-                                              sizeof(app_asr_shell_commands_t));
+
+            /* Check if appAsrShellCommands structure is the same as in flash */
+            app_asr_shell_commands_t appAsrShellCommandsMem = {};
+            uint32_t len          = 0;
+            statusFlash = sln_flash_fs_ops_read(ASR_SHELL_COMMANDS_FILE_NAME, NULL, 0, &len);
+            if (statusFlash == SLN_FLASH_FS_OK)
+            {
+                statusFlash = sln_flash_fs_ops_read(ASR_SHELL_COMMANDS_FILE_NAME, (uint8_t *)&appAsrShellCommandsMem, 0, &len);
+            }
+
             if (statusFlash != SLN_FLASH_FS_OK)
             {
-                configPRINTF(("Failed to write in flash memory.\r\n"));
+                configPRINTF(("Failed reading local demo configuration from flash memory.\r\n"));
             }
-            else
+
+            if (memcmp(&appAsrShellCommands, &appAsrShellCommandsMem, sizeof(app_asr_shell_commands_t)) != 0)
             {
-                configPRINTF(("Updated Shell command parameter in flash memory.\r\n"));
+                statusFlash = sln_flash_fs_ops_save(ASR_SHELL_COMMANDS_FILE_NAME, (uint8_t *)&appAsrShellCommands,
+                                                  sizeof(app_asr_shell_commands_t));
+                if (statusFlash != SLN_FLASH_FS_OK)
+                {
+                    configPRINTF(("Failed to write local demo configuration in flash memory.\r\n"));
+                }
+                else
+                {
+                    configPRINTF(("Updated local demo configuration in flash memory.\r\n"));
+                }
             }
         }
 
@@ -395,7 +434,7 @@ void main(void)
         configPRINTF(("littlefs init failed!\r\n"));
     }
 
-    sln_flash_fs_cbs_t flash_mgmt_cbs = {NULL, NULL, SLN_MIC_OFF, SLN_MIC_ON};
+    sln_flash_fs_cbs_t flash_mgmt_cbs = {NULL, NULL, pre_sector_erase_callback, post_sector_erase_callback};
 
     statusFlash = sln_flash_fs_ops_setcbs(&flash_mgmt_cbs);
     if (SLN_FLASH_FS_OK != statusFlash)
