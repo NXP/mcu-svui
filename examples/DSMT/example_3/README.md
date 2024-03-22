@@ -19,7 +19,7 @@ The purpose of this example is to tune an English DSMT model.
 - Download [DSpotter GarbGen Tool](http://tool.cyberon.com.tw/DSpotterGarbGenTool/index.php?lang=en)
 - Multiple voices (male and female) are needed (e.g. 5 male voices, 5 female voices)
 - Every voice repeats the wake word multiple times with different pitch/speed
-- The recordings must be **.wav** files saved in format: Sampling Rate 16000Hz, Resolution: 16bit, mono channel, PCM
+- The recordings must be **.wav** files saved in the following format: Sampling Rate 16000Hz, Resolution: 16bit, mono channel, PCM
 
 - Example tools to use: 
     - [ttsmp3.com](https://ttsmp3.com/)
@@ -27,11 +27,20 @@ The purpose of this example is to tune an English DSMT model.
     - Actual people uttering the wake word
         - For a better coverage, the recordings can be done closer to the microphone (Near Field) and farther from the microphone (Far Field)
 
-- Create a **.spt** file that includes the **.wav** files and the uttered wake word during the recordings
-- In the example below, there are 10 recordings (5 male voices, 5 female voices). The wake word was uttered in six different ways by each voice
+- Create a **.spt** file in which you include the absolute paths to the **.wav** files and the list of uttered words during the recordings separated by **TAB** 
 
-> [!NOTE]
+>[!NOTE]
 > Use **TAB** after the .wav files. Do NOT use space.
+>if the uttered word is repeated during the recording multiple times, write it for each time it was uttered and separate the occurrences with '/'
+
+- In order to create the **.spt** file, Notepad++ can be used as such:
+    - Open Notepad++
+    - Write the contents as instructed
+    - Press CTRL-S or File -> Save as (button is located in the upper left corner)
+    - In the "Save as type" drag menu select "All types"
+    - Write your file name and end it with .spt
+
+- In the example below, there are 10 recordings (5 male voices, 5 female voices). The wake word was uttered in six different ways by each voice
 
 <img src="../../../docs/image-55.png" width="950">
 
@@ -43,7 +52,7 @@ The purpose of this example is to tune an English DSMT model.
     - We recommend 24h news
     - The .wav file of the recorded news should not exceed 2GB, otherwise it has to be split in multiple files
     - The recordings must be **.wav** files saved in format: Sampling Rate 16000Hz, Resolution: 16bit, mono channel, PCM
-- Add the path of the wav files
+- Add the absolute paths to the wav files
 - Convert the spt file to UTF-16 LE BOM
 
 <img src="../../../docs/image-62.png" width="650">
@@ -68,13 +77,11 @@ The purpose of this example is to tune an English DSMT model.
 
 ## Integrate automatically generated garbage words
 
-- Open the dsmt file
 - Unzip the contents from /DSpotterGarbGen_Output/oob_demo_en_xxxxxxxxxxxxxx.zip
+- Replace the files found in the original DSMT folder with the contents from the unzipped folder
 
 > [!NOTE]
 > For our example the DSMT project name is "oob_demo_en"
-
-- **Batch Add** the new created file from /DSpotterGarbGen_Output/oob_demo_en_xxxxxxxxxxxxxx/WW.txt
 - More garbage words can be added manually
 - Command phonemes can be modified manually - need to click **Update** after modifying them
 - **Reward** and **MapId** have to be changed:
